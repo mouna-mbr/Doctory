@@ -1,0 +1,28 @@
+.doctory-footer {
+  background: #f8f9fb;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding: 1.25rem 0;
+  color: #333;
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.footer-left { font-size: 0.95rem; }
+.footer-left strong { color: #1B2688; }
+
+.footer-team { font-size: 0.9rem; }
+.footer-team .team-title { font-weight: 700; margin-bottom: 0.4rem; color: #1B2688; }
+
+.footer-team ul { list-style: none; padding: 0; margin: 0; line-height: 1.6; }
+
+@media (max-width: 700px) {
+  .footer-container { flex-direction: column; gap: 0.75rem; }
+}
