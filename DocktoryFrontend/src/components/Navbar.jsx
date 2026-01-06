@@ -12,8 +12,8 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userName] = useState("Omar Ben");
-  const [userEmail] = useState("omar@example.com");
+  const [userName] = useState("Mouna Ben Rebah");
+  const [userEmail] = useState("Mouna@example.com");
 
   // Fonction simple pour basculer le menu
   const toggleMenu = () => {
@@ -86,7 +86,7 @@ export default function Navbar() {
             <a href="/"><FaHome /> <span>Accueil</span></a>
             <a href="/services"><FaStethoscope /> <span>Services</span></a>
             <a href="/doctors"><FaUserMd /> <span>Médecins</span></a>
-            <a href="/contact" className="desktop-contact-btn">
+            <a href="/contact" >
               <FaPhone /> <span>Contact</span>
             </a>
           </nav>
