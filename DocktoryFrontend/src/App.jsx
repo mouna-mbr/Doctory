@@ -5,6 +5,7 @@ import Accueil from "./pages/Accueil";
 import Profile from "./pages/Profile";
 import SettingsProfile from "./pages/SettingsProfile"; 
 import Dossier from "./pages/Dossier"; 
+import Doctors from "./pages/Doctors";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -69,6 +70,16 @@ function App() {
             </>
           }
         />
+        <Route
+            path="/doctors"
+            element={
+              <>
+                <Navbar />
+                <Doctors />
+                <Footer />
+              </>
+            }
+          />
       </Routes>
     </BrowserRouter>
   );
