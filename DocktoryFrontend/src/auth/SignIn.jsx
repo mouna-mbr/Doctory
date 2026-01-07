@@ -1,8 +1,60 @@
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaStethoscope, FaPills, FaHeartbeat, FaSyringe, FaFlask } from "react-icons/fa"
 import "../assets/css/SignIn.css"
 import logo from '../assets/photos/logobgWhite.png'; 
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError(""); // Clear error when user types
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token and user info in localStorage
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        
+        // Redirect to home or dashboard
+        navigate("/");
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-container">
       <div className="medical-icons-bg">
@@ -32,11 +84,29 @@ const SignIn = () => {
         <h2>Connexion</h2>
         <p>Accédez à votre compte Doctory</p>
 
-        <form>
-          <input type="email" placeholder="Email" required />
-          <input type="password" placeholder="Mot de passe" required />
+        {error && <div className="error-message">{error}</div>}
 
-          <button type="submit">Se connecter</button>
+        <form onSubmit={handleSubmit}>
+          <input 
+            type="email" 
+            name="email"
+            placeholder="Email" 
+            value={formData.email}
+            onChange={handleChange}
+            required 
+          />
+          <input 
+            type="password" 
+            name="password"
+            placeholder="Mot de passe" 
+            value={formData.password}
+            onChange={handleChange}
+            required 
+          />
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
         </form>
 
         <p className="switch">
