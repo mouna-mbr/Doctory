@@ -182,22 +182,8 @@ const Dashboard = () => {
       color: "#ffc107",
       bgColor: "rgba(255, 193, 7, 0.1)"
     },
-    {
-      id: 5,
-      title: "Utilisateurs Actifs",
-      value: stats.activeUsers,
-      icon: <FaCalendarAlt />,
-      color: "#28a745",
-      bgColor: "rgba(40, 167, 69, 0.1)"
-    },
-    {
-      id: 6,
-      title: "Utilisateurs Inactifs",
-      value: stats.inactiveUsers,
-      icon: <FaUsers />,
-      color: "#dc3545",
-      bgColor: "rgba(220, 53, 69, 0.1)"
-    }
+   
+    
   ];
 
   if (loading) {

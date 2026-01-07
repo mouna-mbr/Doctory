@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
 import Accueil from "./pages/Accueil";
@@ -14,6 +14,7 @@ function App() {
       <Routes>
         {/* pages sans navbar */}
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<SignUp />} />
         {/* pages admin */}
         <Route path="/admin/*" element={<AdminLayout />}>

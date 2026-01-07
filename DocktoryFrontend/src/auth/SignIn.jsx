@@ -38,12 +38,15 @@ const SignIn = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Store token and user info in localStorage
         localStorage.setItem("token", data.data.token);
         localStorage.setItem("user", JSON.stringify(data.data.user));
         
-        // Redirect to home or dashboard
-        navigate("/");
+        // Redirect based on role
+        if (data.data.user.role === "ADMIN") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
       } else {
         setError(data.message || "Login failed");
       }
