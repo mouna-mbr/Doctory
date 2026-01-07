@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaCamera,
   FaUserMd,
@@ -8,25 +8,117 @@ import {
 import "../assets/css/SettingsProfile.css";
 
 const SettingsProfile = () => {
-  // ⚠️ Plus tard ça viendra du backend / context
-  const [role] = useState("doctor"); // doctor | patient | pharmacist | admin
+  const [role, setRole] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    fullName: "Mouna Ben Rebah",
-    email: "mouna@example.com",
-    phone: "22123456",
-    gender: "female",
-    speciality: "Cardiologue",
-    experience: 5,
-    consultationPrice: 80,
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    gender: "",
+    specialty: "",
+    yearsOfExperience: "",
+    consultationPrice: "",
     pharmacyName: "",
     pharmacyAddress: "",
-    birthDate: "",
+    dateOfBirth: "",
   });
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userData = localStorage.getItem("user");
+        
+        if (!token || !userData) {
+          window.location.href = "/signin";
+          return;
+        }
+
+        const userInfo = JSON.parse(userData);
+        setUserId(userInfo.id);
+        setRole(userInfo.role);
+        
+        const response = await fetch(`http://localhost:5000/api/users/${userInfo.id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const user = data.data;
+          setFormData({
+            fullName: user.fullName || "",
+            email: user.email || "",
+            phoneNumber: user.phoneNumber || "",
+            gender: user.gender || "",
+            specialty: user.specialty || "",
+            yearsOfExperience: user.yearsOfExperience || "",
+            consultationPrice: user.consultationPrice || "",
+            pharmacyName: user.pharmacyName || "",
+            pharmacyAddress: user.pharmacyAddress || "",
+            dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : "",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setMessage("Erreur lors du chargement du profil");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage("Profil mis à jour avec succès!");
+        // Update localStorage
+        const userData = JSON.parse(localStorage.getItem("user"));
+        userData.fullName = formData.fullName;
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else {
+        setMessage(data.message || "Erreur lors de la mise à jour");
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      setMessage("Erreur lors de la mise à jour du profil");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="settings-container">Chargement...</div>;
+  }
 
   return (
     <div className="settings-container">
@@ -47,7 +139,9 @@ const SettingsProfile = () => {
       </div>
 
       {/* FORM */}
-      <form className="settings-form">
+      {message && <div className={`message ${message.includes('succès') ? 'success' : 'error'}`}>{message}</div>}
+      
+      <form className="settings-form" onSubmit={handleSubmit}>
         <div className="form-row">
           <input
             name="fullName"
@@ -65,12 +159,12 @@ const SettingsProfile = () => {
 
         <div className="form-row">
           <input
-            name="phone"
-            value={formData.phone}
+            name="phoneNumber"
+            value={formData.phoneNumber}
             onChange={handleChange}
             placeholder="Téléphone"
           />
-          {role !== "pharmacist" && (
+          {role !== "PHARMACIST" && (
             <select name="gender" value={formData.gender} onChange={handleChange}>
               <option value="">Genre</option>
               <option value="female">Femme</option>
@@ -80,21 +174,21 @@ const SettingsProfile = () => {
         </div>
 
         {/* DOCTOR */}
-        {role === "doctor" && (
+        {role === "DOCTOR" && (
           <>
             <h4 className="section-title">
               <FaUserMd /> Informations professionnelles
             </h4>
             <div className="form-row">
               <input
-                name="speciality"
-                value={formData.speciality}
+                name="specialty"
+                value={formData.specialty}
                 onChange={handleChange}
                 placeholder="Spécialité"
               />
               <input
-                name="experience"
-                value={formData.experience}
+                name="yearsOfExperience"
+                value={formData.yearsOfExperience}
                 onChange={handleChange}
                 placeholder="Années d'expérience"
                 type="number"
@@ -111,22 +205,22 @@ const SettingsProfile = () => {
         )}
 
         {/* PATIENT */}
-        {role === "patient" && (
+        {role === "PATIENT" && (
           <>
             <h4 className="section-title">
               <FaUser /> Informations personnelles
             </h4>
             <input
               type="date"
-              name="birthDate"
-              value={formData.birthDate}
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
               onChange={handleChange}
             />
           </>
         )}
 
         {/* PHARMACIST */}
-        {role === "pharmacist" && (
+        {role === "PHARMACIST" && (
           <>
             <h4 className="section-title">
               <FaClinicMedical /> Pharmacie
@@ -144,7 +238,9 @@ const SettingsProfile = () => {
           </>
         )}
 
-        <button className="save-btn">Enregistrer les modifications</button>
+        <button className="save-btn" type="submit" disabled={saving}>
+          {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+        </button>
       </form>
     </div>
   );

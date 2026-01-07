@@ -11,9 +11,22 @@ import logo from '../assets/photos/logonobg.png';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userName] = useState("Mouna Ben Rebah");
-  const [userEmail] = useState("Mouna@example.com");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+    
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const userName = user?.fullName || "Utilisateur";
+  const userEmail = user?.email || "";
 
   // Fonction simple pour basculer le menu
   const toggleMenu = () => {
@@ -25,7 +38,13 @@ export default function Navbar() {
   };
 
   const handleLogin = () => setIsLoggedIn(true);
-  const handleLogout = () => setIsLoggedIn(false);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    setUser(null);
+    window.location.href = "/signin";
+  };
 
   // Fermeture du menu mobile quand on clique sur un lien
   const closeMenu = () => {
