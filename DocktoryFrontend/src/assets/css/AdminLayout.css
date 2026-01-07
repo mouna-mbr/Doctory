@@ -1,0 +1,223 @@
+/* Admin Layout Styles */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f6fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 260px;
+  background: #01052c;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.3s ease;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-sidebar.closed {
+  width: 70px;
+}
+
+.sidebar-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 80px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+  font-size: 18px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.admin-sidebar.closed .sidebar-header h3 {
+  display: none;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-left: 4px solid white;
+}
+
+.nav-icon {
+  font-size: 20px;
+  min-width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-sidebar.closed .nav-text {
+  display: none;
+}
+
+.logout-btn {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ff6b6b;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff5252;
+}
+
+/* Main Content Area */
+.admin-main {
+  flex: 1;
+  margin-left: 260px;
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar.closed ~ .admin-main {
+  margin-left: 70px;
+}
+
+/* Top Header */
+.admin-header {
+  background: white;
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #01052c;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(1, 5, 44, 0.1);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.admin-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.admin-role {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+/* Content Area */
+.admin-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 70px;
+  }
+
+  .admin-sidebar .nav-text,
+  .admin-sidebar .sidebar-header h3 {
+    display: none;
+  }
+
+  .admin-main {
+    margin-left: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar {
+    width: 0;
+    transform: translateX(-100%);
+  }
+
+  .admin-sidebar.open {
+    width: 260px;
+    transform: translateX(0);
+  }
+
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+}

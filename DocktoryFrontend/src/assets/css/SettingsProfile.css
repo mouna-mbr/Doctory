@@ -1,0 +1,95 @@
+.settings-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.445);
+  border-radius: 14px;
+    background: white;
+
+}
+
+.settings-title {
+  text-align: center;
+  color: #1b2688;
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.profile-photo-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.photo-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.photo-wrapper img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #1b2688;
+}
+
+.upload-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #1b2688;
+  color: white;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row input,
+.form-row select,
+.settings-form input,
+.settings-form select {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.section-title {
+  color: #01052c;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.save-btn {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1b2688, #01052c);
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+}

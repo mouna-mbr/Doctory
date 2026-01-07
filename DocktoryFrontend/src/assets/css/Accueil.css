@@ -1,0 +1,89 @@
+.home-container {
+  font-family: Arial, sans-serif;
+}
+
+/* HERO */
+.hero {
+  background-color: #01052c
+;
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.hero-content h1 {
+  font-size: 42px;
+  margin-bottom: 20px;
+}
+
+.hero-content h1 span {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.hero-content p {
+  font-size: 18px;
+  max-width: 700px;
+  margin: auto;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.hero-btn {
+  background-color: white;
+  color: #1B2688;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.hero-btn:hover {
+  background-color: #e6e6e6;
+}
+
+/* FEATURES */
+.features {
+  padding: 60px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.features h2 {
+  color: #1B2688;
+  font-size: 32px;
+  margin-bottom: 40px;
+}
+
+.features-list {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.feature-card {
+  background-color: white;
+  padding: 25px;
+  width: 260px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-card h3 {
+  color: #1B2688;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  font-size: 15px;
+  color: #555;
+}
