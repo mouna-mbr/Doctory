@@ -163,7 +163,7 @@ const Dashboard = () => {
       title: "Docteurs",
       value: stats.totalDoctors,
       icon: <FaUserMd />,
-      color: "#28a745",
+      color: "#1b2688",
       bgColor: "rgba(40, 167, 69, 0.1)"
     },
     {
@@ -171,7 +171,7 @@ const Dashboard = () => {
       title: "Patients",
       value: stats.totalPatients,
       icon: <FaUsers />,
-      color: "#17a2b8",
+      color: "#1b2688",
       bgColor: "rgba(23, 162, 184, 0.1)"
     },
     {
@@ -179,7 +179,7 @@ const Dashboard = () => {
       title: "Pharmaciens",
       value: stats.totalPharmacists,
       icon: <FaPills />,
-      color: "#ffc107",
+      color: "#1b2688",
       bgColor: "rgba(255, 193, 7, 0.1)"
     },
    
