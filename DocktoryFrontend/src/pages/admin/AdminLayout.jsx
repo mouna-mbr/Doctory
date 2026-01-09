@@ -64,15 +64,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside className={`admin-sidebar ${isMobile ? (sidebarOpen ? "open" : "") : (sidebarOpen ? "open" : "closed")}`}>
         <div className="sidebar-header">
-          {isMobile && (
-            <button 
-              className="sidebar-toggle" 
-              onClick={() => setSidebarOpen(false)}
-              style={{ color: 'white', background: 'rgba(255,255,255,0.1)' }}
-            >
-              <FaBars />
-            </button>
-          )}
+        
           <img src={logo} alt="Doctory Logo" className="sidebar-logo" />
           <h3>Doctory Admin</h3>
         </div>

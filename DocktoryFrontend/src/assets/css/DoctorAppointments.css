@@ -1,0 +1,73 @@
+.doctor-appointments {
+  max-width: 1000px;
+  margin: auto;
+  padding: 32px;
+}
+
+.doctor-appointments h2 {
+  color: #01052c;
+  margin-bottom: 24px;
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.appointment-card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.status {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.requested {
+  background: #ffeeba;
+  color: #856404;
+}
+
+.status.confirmed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actions button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.actions .accept {
+  background: #28a745;
+  color: white;
+}
+
+.actions .reject {
+  background: #dc3545;
+  color: white;
+}

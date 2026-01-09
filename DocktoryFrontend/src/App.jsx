@@ -1,85 +1,115 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
+
 import Accueil from "./pages/Accueil";
 import Profile from "./pages/Profile";
-import SettingsProfile from "./pages/SettingsProfile"; 
-import Dossier from "./pages/Dossier"; 
+import SettingsProfile from "./pages/SettingsProfile";
+import Dossier from "./pages/Dossier";
 import Doctors from "./pages/Doctors";
+import AppointmentBooking from "./pages/AppointmentBooking"; // 👈 rendez-vous
+import DoctorAppointments from "./pages/DoctorAppointments";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserList from "./pages/admin/UserList";
+
+/* Layout avec Navbar + Footer */
+const MainLayout = ({ children }) => (
+  <>
+    <Navbar />
+    {children}
+    <Footer />
+  </>
+);
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Pages sans Navbar */}
+
+        {/* Auth */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<SignUp />} />
-        {/* pages admin */}
+
+        {/* Admin */}
         <Route path="/admin/*" element={<AdminLayout />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="users" element={<UserList />} />
         </Route>
 
-        {/* Pages avec Navbar et Footer */}
+        {/* Pages publiques */}
         <Route
           path="/"
           element={
-            <>
-              <Navbar />
+            <MainLayout>
               <Accueil />
-              <Footer />
-            </>
+            </MainLayout>
           }
         />
 
         <Route
           path="/profile"
           element={
-            <>
-              <Navbar />
+            <MainLayout>
               <Profile />
-              <Footer />
-            </>
+            </MainLayout>
           }
         />
 
         <Route
           path="/settings"
           element={
-            <>
-              <Navbar />
+            <MainLayout>
               <SettingsProfile />
-              <Footer />
-            </>
+            </MainLayout>
           }
         />
+
         <Route
           path="/dossier"
           element={
-            <>
-              <Navbar />
+            <MainLayout>
               <Dossier />
-              <Footer />
-            </>
+            </MainLayout>
+          }
+        />
+
+        {/* Médecins */}
+        <Route
+          path="/doctors"
+          element={
+            <MainLayout>
+              <Doctors />
+            </MainLayout>
+          }
+        />
+
+        {/* Rendez-vous (Doctory) */}
+        <Route
+          path="/appointments"
+          element={
+            <MainLayout>
+              <AppointmentBooking />
+            </MainLayout>
           }
         />
         <Route
-            path="/doctors"
-            element={
-              <>
-                <Navbar />
-                <Doctors />
-                <Footer />
-              </>
-            }
-          />
+          path="/doctor/appointments"
+          element={
+            <>
+              <Navbar />
+              <DoctorAppointments />
+              <Footer />
+            </>
+          }
+      />
+
       </Routes>
     </BrowserRouter>
   );
