@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { 
-  FaHome, 
-  FaUsers, 
+import {
+  FaHome,
+  FaUsers,
   FaCalendarAlt,
   FaChartBar,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaBars,
 } from "react-icons/fa";
 import "../../assets/css/AdminLayout.css";
 import logo from "../../assets/photos/logobgWhite.png";
@@ -13,7 +14,29 @@ import logo from "../../assets/photos/logobgWhite.png";
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Fermée par défaut sur mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecter si on est sur mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      // Sur desktop, sidebar ouverte par défaut
+      if (!mobile) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const menuItems = [
     { id: 1, name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
@@ -23,20 +46,35 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/signin");
+    if (isMobile) setSidebarOpen(false);
   };
 
-  
+  const handleNavigation = (path) => {
+    navigate(path);
+    // Fermer la sidebar sur mobile après avoir cliqué
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="admin-layout">
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
+      <aside className={`admin-sidebar ${isMobile ? (sidebarOpen ? "open" : "") : (sidebarOpen ? "open" : "closed")}`}>
         <div className="sidebar-header">
+          {isMobile && (
+            <button 
+              className="sidebar-toggle" 
+              onClick={() => setSidebarOpen(false)}
+              style={{ color: 'white', background: 'rgba(255,255,255,0.1)' }}
+            >
+              <FaBars />
+            </button>
+          )}
           <img src={logo} alt="Doctory Logo" className="sidebar-logo" />
-          {sidebarOpen && <h3>Doctory Admin</h3>}
+          <h3>Doctory Admin</h3>
         </div>
 
         <nav className="sidebar-nav">
@@ -44,26 +82,45 @@ const AdminLayout = () => {
             <button
               key={item.id}
               className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
-              onClick={() => navigate(item.path)}
-              title={!sidebarOpen ? item.name : ""}
+              onClick={() => handleNavigation(item.path)}
             >
               <span className="nav-icon">{item.icon}</span>
-              {sidebarOpen && <span className="nav-text">{item.name}</span>}
+              <span className="nav-text">{item.name}</span>
             </button>
           ))}
         </nav>
 
         <button className="nav-item logout-btn" onClick={handleLogout}>
           <span className="nav-icon"><FaSignOutAlt /></span>
-          {sidebarOpen && <span className="nav-text">Déconnexion</span>}
+          <span className="nav-text">Déconnexion</span>
         </button>
       </aside>
 
-      {/* Main Content */}
+      {/* Overlay mobile - ferme la sidebar quand on clique dessus */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="sidebar-overlay" 
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1500
+          }}
+        />
+      )}
+
+      {/* Main */}
       <div className="admin-main">
-        {/* Top Bar */}
         <header className="admin-header">
-      
+          {/* Bouton hamburger pour ouvrir la sidebar sur mobile */}
+          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <FaBars />
+          </button>
+
           <div className="header-right">
             <div className="admin-info">
               <span className="admin-name">Admin</span>
@@ -72,7 +129,6 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="admin-content">
           <Outlet />
         </main>
