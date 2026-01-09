@@ -1,9 +1,12 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
 const connectDB = require("./config/db");
+const { initializeSocket } = require("./config/socket");
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app);
 
 // middlewares
 app.use(cors());
@@ -20,11 +23,15 @@ app.use((req, res, next) => {
 // database
 connectDB();
 
+// Initialize Socket.io
+initializeSocket(server);
+
 // routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const availabilityRoutes = require("./routes/availabilityRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // Montage des routes avec logging
 console.log("Mounting routes...");
@@ -32,6 +39,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/availability", availabilityRoutes);
+app.use("/api/notifications", notificationRoutes);
 console.log("Routes mounted successfully");
 
 // Route de debug pour voir toutes les routes montées
@@ -104,8 +112,9 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Socket.io initialized`);
   console.log(`Test endpoints:`);
   console.log(`  GET  http://localhost:${PORT}/api/test`);
   console.log(`  GET  http://localhost:${PORT}/api/test-auth (requires token)`);

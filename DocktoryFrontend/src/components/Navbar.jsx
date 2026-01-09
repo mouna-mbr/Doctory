@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FaBell, FaUser, FaPhone, FaSignOutAlt, FaSignInAlt, 
   FaBars, FaTimes, FaCog, FaEnvelope, FaCalendarAlt,
   FaHome, FaStethoscope, FaUserMd
 } from 'react-icons/fa';
 import { MdFavorite, MdPayment } from 'react-icons/md';
+import { io } from 'socket.io-client';
 import '../assets/css/Navbar.css';
 import logo from '../assets/photos/logonobg.png';
 
@@ -13,6 +14,10 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const socketRef = useRef(null);
 
   // Load user data from localStorage
   useEffect(() => {
@@ -22,8 +27,111 @@ export default function Navbar() {
     if (token && userData) {
       setIsLoggedIn(true);
       setUser(JSON.parse(userData));
+      fetchNotifications();
+      fetchUnreadCount();
+      
+      // Initialize Socket.io connection
+      socketRef.current = io("http://localhost:5000", {
+        auth: {
+          token: token
+        }
+      });
+
+      // Listen for new notifications
+      socketRef.current.on("new-notification", (notification) => {
+        console.log("New notification received:", notification);
+        setNotifications((prev) => [notification, ...prev.slice(0, 4)]);
+      });
+
+      // Listen for unread count updates
+      socketRef.current.on("unread-count-update", (count) => {
+        console.log("Unread count updated:", count);
+        setUnreadCount(count);
+      });
+
+      // Handle connection errors
+      socketRef.current.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+      });
+
+      // Cleanup on unmount
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+        }
+      };
     }
   }, []);
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5000/api/notifications", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setNotifications(data.data.slice(0, 5)); // Get last 5 notifications
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Fetch unread count
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5000/api/notifications/unread-count", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUnreadCount(data.data.count);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
+
+  // Mark notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch("http://localhost:5000/api/notifications/mark-all-read", {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
 
   const userName = user?.fullName || "Utilisateur";
   const userEmail = user?.email || "";
@@ -113,12 +221,78 @@ export default function Navbar() {
           {/* Côté droit DESKTOP */}
           <div className="nav-right desktop-only">
             {/* Notifications */}
-            <div className="nav-notifications">
-              <button className="nav-icon-btn" aria-label="Notifications">
-                <FaBell />
-                <span className="notification-badge">3</span>
-              </button>
-            </div>
+            {isLoggedIn && (
+              <div className="nav-notifications">
+                <button 
+                  className="nav-icon-btn" 
+                  aria-label="Notifications"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <FaBell />
+                  {unreadCount > 0 && (
+                    <span className="notification-badge">{unreadCount}</span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="notifications-dropdown">
+                    <div className="notifications-header">
+                      <h3>Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button onClick={markAllAsRead} className="mark-all-read-btn">
+                          Tout marquer comme lu
+                        </button>
+                      )}
+                    </div>
+                    <div className="notifications-list">
+                      {notifications.length === 0 ? (
+                        <div className="no-notifications">
+                          <FaBell style={{ fontSize: '48px', color: '#ccc' }} />
+                          <p>Aucune notification</p>
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div 
+                            key={notification._id} 
+                            className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
+                            onClick={() => {
+                              if (!notification.isRead) {
+                                markAsRead(notification._id);
+                              }
+                              if (notification.appointmentId) {
+                                window.location.href = '/appointments';
+                              }
+                            }}
+                          >
+                            <div className="notification-icon">
+                              <FaCalendarAlt />
+                            </div>
+                            <div className="notification-content">
+                              <h4>{notification.title}</h4>
+                              <p>{notification.message}</p>
+                              <span className="notification-time">
+                                {new Date(notification.createdAt).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            {!notification.isRead && (
+                              <div className="notification-unread-dot"></div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="notifications-footer">
+                      <a href="/notifications">Voir toutes les notifications</a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Menu utilisateur DESKTOP */}
             <div className="user-menu-container">
@@ -331,14 +505,18 @@ export default function Navbar() {
           </div>
 
           {/* Notifications mobile */}
-          <div className="mobile-nav-section">
-            <h4 className="mobile-section-title">Notifications</h4>
-            <a href="/notifications" className="mobile-nav-item notification-item" onClick={closeMenu}>
-              <FaBell />
-              <span>Notifications</span>
-              <span className="mobile-notification-badge">3</span>
-            </a>
-          </div>
+          {isLoggedIn && (
+            <div className="mobile-nav-section">
+              <h4 className="mobile-section-title">Notifications</h4>
+              <a href="/notifications" className="mobile-nav-item notification-item" onClick={closeMenu}>
+                <FaBell />
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <span className="mobile-notification-badge">{unreadCount}</span>
+                )}
+              </a>
+            </div>
+          )}
         </div>
       </div>
 

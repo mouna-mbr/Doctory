@@ -1,6 +1,7 @@
 const AppointmentRepository = require("../repositories/AppointmentRepository");
 const UserRepository = require("../repositories/UserRepository");
 const AvailabilityService = require("./AvailabilityService");
+const NotificationService = require("./NotificationService");
 
 class AppointmentService {
   // Patient creates appointment request
@@ -68,6 +69,21 @@ class AppointmentService {
       status: "REQUESTED",
     });
 
+    // Create notification for doctor
+    const formattedDate = start.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    await NotificationService.createAppointmentRequestNotification(
+      doctorId,
+      patient.fullName,
+      appointment._id,
+      formattedDate
+    );
+
     return appointment;
   }
 
@@ -111,6 +127,22 @@ class AppointmentService {
       "CONFIRMED"
     );
 
+    // Create notification for patient
+    const doctor = await UserRepository.findById(doctorId);
+    const formattedDate = new Date(appointment.startDateTime).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    await NotificationService.createAppointmentConfirmedNotification(
+      appointment.patientId._id.toString(),
+      doctor.fullName,
+      appointmentId,
+      formattedDate
+    );
+
     return {
       message: "Appointment confirmed successfully",
       appointment: updatedAppointment,
@@ -143,6 +175,38 @@ class AppointmentService {
       appointmentId,
       "CANCELLED"
     );
+
+    // Create notifications for both doctor and patient
+    const formattedDate = new Date(appointment.startDateTime).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const doctorIdStr = appointment.doctorId._id.toString();
+    const patientIdStr = appointment.patientId._id.toString();
+    const cancellerName = userId === doctorIdStr ? appointment.doctorId.fullName : appointment.patientId.fullName;
+
+    // Notify the other party
+    if (userId === doctorIdStr) {
+      await NotificationService.createAppointmentCancelledNotification(
+        patientIdStr,
+        cancellerName,
+        appointmentId,
+        formattedDate,
+        userId
+      );
+    } else {
+      await NotificationService.createAppointmentCancelledNotification(
+        doctorIdStr,
+        cancellerName,
+        appointmentId,
+        formattedDate,
+        userId
+      );
+    }
 
     return {
       message: "Appointment cancelled successfully",
@@ -216,6 +280,22 @@ class AppointmentService {
     const updatedAppointment = await AppointmentRepository.updateStatus(
       appointmentId,
       "COMPLETED"
+    );
+
+    // Create notification for patient
+    const doctor = await UserRepository.findById(appointment.doctorId._id);
+    const formattedDate = new Date(appointment.startDateTime).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    await NotificationService.createAppointmentCompletedNotification(
+      appointment.patientId._id.toString(),
+      doctor.fullName,
+      appointmentId,
+      formattedDate
     );
 
     return {
