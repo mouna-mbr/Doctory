@@ -19,9 +19,16 @@ const authMiddleware = async (req, res, next) => {
     // Verify token
     const decoded = AuthService.verifyToken(token);
 
+    if (!decoded || !decoded.id || !decoded.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token payload",
+      });
+    }
+
     // Attach user info to request
     req.user = {
-      id: decoded.id,
+      userId: decoded.id,
       role: decoded.role,
     };
 
@@ -29,7 +36,7 @@ const authMiddleware = async (req, res, next) => {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired token",
+      message: error.message || "Invalid or expired token",
     });
   }
 };
