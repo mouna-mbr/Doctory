@@ -108,7 +108,11 @@ const SignUp = () => {
         localStorage.setItem("user", JSON.stringify(data.data.user));
         
         // Redirect to home or dashboard
-        navigate("/");
+        if (data.data.user.role === "ADMIN") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
       } else {
         setError(data.message || "Inscription échouée");
       }
