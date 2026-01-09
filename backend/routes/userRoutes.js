@@ -3,9 +3,15 @@ const UserController = require("../controllers/UserController");
 const { authMiddleware, roleMiddleware } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
+router.get("/doctors", UserController.getDoctors.bind(UserController));
+
+// Get doctor by ID (public route)
+router.get("/doctors/:id", UserController.getDoctorById.bind(UserController));
 
 // All user routes require authentication
 router.use(authMiddleware);
+// Get all doctors (public route)
+
 
 // Get all users (Admin only)
 router.get(

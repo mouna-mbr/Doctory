@@ -1,6 +1,91 @@
 const UserService = require("../services/UserService");
 
 class UserController {
+
+  // GET /api/users/doctors - Get all doctors (public)
+  async getDoctors(req, res) {
+    try {
+      const doctors = await UserService.getUsersByRole("DOCTOR");
+      
+      // Filtrer les données sensibles
+      const publicDoctors = doctors.map(doctor => ({
+        _id: doctor._id,
+        fullName: doctor.fullName,
+        specialty: doctor.specialty,
+        yearsOfExperience: doctor.yearsOfExperience,
+        consultationPrice: doctor.consultationPrice,
+        location: doctor.location || doctor.city || "Tunis",
+        phoneNumber: doctor.phoneNumber,
+        email: doctor.email,
+        profilePicture: doctor.profilePicture,
+        description: doctor.description || doctor.bio || "Médecin professionnel",
+        isAvailable: doctor.isAvailable !== false,
+        rating: doctor.rating || 4.5,
+        reviewsCount: doctor.reviewsCount || 0,
+        createdAt: doctor.createdAt
+      }));
+
+      res.status(200).json({
+        success: true,
+        count: publicDoctors.length,
+        data: publicDoctors,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // GET /api/users/doctors/:id - Get doctor by ID (public)
+  async getDoctorById(req, res) {
+    try {
+      const { id } = req.params;
+      const doctor = await UserService.getUserById(id);
+
+      if (!doctor || doctor.role !== "DOCTOR") {
+        return res.status(404).json({
+          success: false,
+          message: "Doctor not found",
+        });
+      }
+
+      // Données publiques seulement
+      const publicDoctor = {
+        _id: doctor._id,
+        fullName: doctor.fullName,
+        specialty: doctor.specialty,
+        yearsOfExperience: doctor.yearsOfExperience,
+        consultationPrice: doctor.consultationPrice,
+        location: doctor.location || doctor.city || "Tunis",
+        phoneNumber: doctor.phoneNumber,
+        email: doctor.email,
+        profilePicture: doctor.profilePicture,
+        description: doctor.description || doctor.bio || "Médecin professionnel",
+        isAvailable: doctor.isAvailable !== false,
+        rating: doctor.rating || 4.5,
+        reviewsCount: doctor.reviewsCount || 0,
+        education: doctor.education || [],
+        languages: doctor.languages || [],
+        createdAt: doctor.createdAt
+      };
+
+      res.status(200).json({
+        success: true,
+        data: publicDoctor,
+      });
+    } catch (error) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+
+
+
   // Get all users
   async getAllUsers(req, res) {
     try {
