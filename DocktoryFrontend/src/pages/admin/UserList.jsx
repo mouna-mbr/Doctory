@@ -10,6 +10,10 @@ const UserList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
 
   useEffect(() => {
     fetchUsers();
@@ -130,6 +134,68 @@ const UserList = () => {
       alert("Erreur lors de la mise à jour");
       console.error("Toggle status error:", err);
     }
+  };
+
+  const handleViewUser = (user) => {
+    setSelectedUser(user);
+    setShowViewModal(true);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setEditFormData({
+      fullName: user.fullName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5000/api/users/${selectedUser._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchUsers(); // Refresh the list
+        setShowEditModal(false);
+        setSelectedUser(null);
+        alert("Utilisateur mis à jour avec succès");
+      } else {
+        alert(data.message || "Erreur lors de la mise à jour");
+      }
+    } catch (err) {
+      alert("Erreur lors de la mise à jour");
+      console.error("Update user error:", err);
+    }
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const closeModals = () => {
+    setShowViewModal(false);
+    setShowEditModal(false);
+    setSelectedUser(null);
+    setEditFormData({});
   };
 
   const getRoleBadgeClass = (role) => {
@@ -274,12 +340,14 @@ const UserList = () => {
                       <button 
                         className="btn-view" 
                         title="Voir détails"
+                        onClick={() => handleViewUser(user)}
                       >
                         <FaEye />
                       </button>
                       <button 
                         className="btn-edit" 
                         title="Modifier"
+                        onClick={() => handleEditUser(user)}
                       >
                         <FaEdit />
                       </button>
@@ -305,6 +373,145 @@ const UserList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* View User Modal */}
+      {showViewModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Détails de l'Utilisateur</h2>
+              <button className="close-btn" onClick={closeModals}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="user-detail-grid">
+                <div className="detail-item">
+                  <label>Nom Complet:</label>
+                  <p>{selectedUser.fullName}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Email:</label>
+                  <p>{selectedUser.email}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Téléphone:</label>
+                  <p>{selectedUser.phoneNumber}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Rôle:</label>
+                  <p>
+                    <span className={`role-badge ${getRoleBadgeClass(selectedUser.role)}`}>
+                      {getRoleLabel(selectedUser.role)}
+                    </span>
+                  </p>
+                </div>
+                <div className="detail-item">
+                  <label>Statut:</label>
+                  <p>
+                    <span className={`status-badge ${selectedUser.isActive ? "status-active" : "status-inactive"}`}>
+                      {selectedUser.isActive ? (
+                        <>
+                          <FaCheckCircle /> Actif
+                        </>
+                      ) : (
+                        <>
+                          <FaTimesCircle /> Inactif
+                        </>
+                      )}
+                    </span>
+                  </p>
+                </div>
+                <div className="detail-item">
+                  <label>Date d'inscription:</label>
+                  <p>{new Date(selectedUser.createdAt).toLocaleDateString('fr-FR')}</p>
+                </div>
+                <div className="detail-item">
+                  <label>Dernière mise à jour:</label>
+                  <p>{new Date(selectedUser.updatedAt).toLocaleDateString('fr-FR')}</p>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={closeModals}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Modifier l'Utilisateur</h2>
+              <button className="close-btn" onClick={closeModals}>×</button>
+            </div>
+            <form onSubmit={handleUpdateUser}>
+              <div className="modal-body">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="fullName">Nom Complet *</label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      value={editFormData.fullName || ""}
+                      onChange={handleEditFormChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="email">Email *</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={editFormData.email || ""}
+                      onChange={handleEditFormChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="phoneNumber">Téléphone *</label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      value={editFormData.phoneNumber || ""}
+                      onChange={handleEditFormChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="role">Rôle *</label>
+                    <select
+                      id="role"
+                      name="role"
+                      value={editFormData.role || ""}
+                      onChange={handleEditFormChange}
+                      required
+                    >
+                      <option value="ADMIN">Admin</option>
+                      <option value="DOCTOR">Docteur</option>
+                      <option value="PATIENT">Patient</option>
+                      <option value="PHARMACIST">Pharmacien</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={closeModals}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-primary">
+                  Enregistrer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
