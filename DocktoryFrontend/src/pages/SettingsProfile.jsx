@@ -146,6 +146,9 @@ const SettingsProfile = () => {
     try {
       const token = localStorage.getItem("token");
       
+      console.log("Sending update data:", formData);
+      console.log("User ID:", userId);
+      
       const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
         method: "PUT",
         headers: {
@@ -156,6 +159,7 @@ const SettingsProfile = () => {
       });
 
       const data = await response.json();
+      console.log("Response from server:", data);
 
       if (data.success) {
         setMessage("Profil mis à jour avec succès!");
@@ -163,6 +167,11 @@ const SettingsProfile = () => {
         const userData = JSON.parse(localStorage.getItem("user"));
         userData.fullName = formData.fullName;
         localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Redirect to profile page after 1 second
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 1000);
       } else {
         setMessage(data.message || "Erreur lors de la mise à jour");
       }
@@ -297,11 +306,13 @@ const SettingsProfile = () => {
             </h4>
             <input
               name="pharmacyName"
+              value={formData.pharmacyName}
               placeholder="Nom de la pharmacie"
               onChange={handleChange}
             />
             <input
               name="pharmacyAddress"
+              value={formData.pharmacyAddress}
               placeholder="Adresse de la pharmacie"
               onChange={handleChange}
             />

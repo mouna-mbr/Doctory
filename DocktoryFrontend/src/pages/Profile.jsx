@@ -31,9 +31,11 @@ const Profile = () => {
 
         const userInfo = JSON.parse(userData);
         
-        const response = await fetch(`${API_BASE_URL}/users/${userInfo.id}`, {
+        const response = await fetch(`${API_BASE_URL}/users/${userInfo.id}?t=${Date.now()}`, {
           headers: {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}`,
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
           }
         });
 

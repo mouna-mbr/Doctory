@@ -163,11 +163,25 @@ class UserController {
       const { id } = req.params;
       const updateData = req.body;
 
+      console.log("=== UPDATE USER REQUEST ===");
+      console.log("User ID:", id);
+      console.log("Update Data:", updateData);
+      console.log("Authenticated User:", req.user);
+
       // Prevent updating sensitive fields
       delete updateData.passwordHash;
       delete updateData.createdAt;
 
+      // Convert empty strings to null for optional fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === "" || updateData[key] === undefined) {
+          updateData[key] = null;
+        }
+      });
+
       const user = await UserService.updateUser(id, updateData);
+
+      console.log("Updated User:", user);
 
       res.status(200).json({
         success: true,
@@ -175,6 +189,7 @@ class UserController {
         data: user,
       });
     } catch (error) {
+      console.error("Update Error:", error);
       res.status(400).json({
         success: false,
         message: error.message,

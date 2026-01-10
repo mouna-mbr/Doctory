@@ -43,6 +43,41 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Doctor-specific fields
+  specialty: {
+    type: String,
+    default: null,
+  },
+  yearsOfExperience: {
+    type: Number,
+    default: null,
+  },
+  consultationPrice: {
+    type: Number,
+    default: null,
+  },
+  // Patient-specific fields
+  dateOfBirth: {
+    type: Date,
+    default: null,
+  },
+  gender: {
+    type: String,
+    enum: {
+      values: ["male", "female"],
+      message: '{VALUE} is not a valid gender'
+    },
+    default: null,
+  },
+  // Pharmacist-specific fields
+  pharmacyName: {
+    type: String,
+    default: null,
+  },
+  pharmacyAddress: {
+    type: String,
+    default: null,
+  },
 });
 
 // Index for faster email lookups
