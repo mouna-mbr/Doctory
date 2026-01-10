@@ -237,6 +237,48 @@ class UserController {
       });
     }
   }
+
+  // Upload profile image
+  async uploadProfileImage(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded",
+        });
+      }
+
+      // Check if user is updating their own profile or is admin
+      if (req.user.userId !== id && req.user.role !== "ADMIN") {
+        return res.status(403).json({
+          success: false,
+          message: "You can only update your own profile image",
+        });
+      }
+
+      // Construct the image path
+      const imagePath = `/uploads/profiles/${req.file.filename}`;
+
+      // Update user's profileImage field
+      await UserService.updateUser(id, { profileImage: imagePath });
+
+      res.status(200).json({
+        success: true,
+        message: "Profile image updated successfully",
+        data: {
+          profileImage: imagePath,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new UserController();

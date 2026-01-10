@@ -14,54 +14,28 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const socketRef = useRef(null);
 
-  // Load user data from localStorage
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-      fetchNotifications();
-      fetchUnreadCount();
-      
-      // Initialize Socket.io connection
-      socketRef.current = io("http://localhost:5000", {
-        auth: {
-          token: token
+  // Fetch user profile to get profileImage
+  const fetchUserProfile = async (userId, token) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
       });
-
-      // Listen for new notifications
-      socketRef.current.on("new-notification", (notification) => {
-        console.log("New notification received:", notification);
-        setNotifications((prev) => [notification, ...prev.slice(0, 4)]);
-      });
-
-      // Listen for unread count updates
-      socketRef.current.on("unread-count-update", (count) => {
-        console.log("Unread count updated:", count);
-        setUnreadCount(count);
-      });
-
-      // Handle connection errors
-      socketRef.current.on("connect_error", (error) => {
-        console.error("Socket connection error:", error);
-      });
-
-      // Cleanup on unmount
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-        }
-      };
+      const data = await response.json();
+      if (data.success && data.data.profileImage) {
+        setProfileImage(data.data.profileImage);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
     }
-  }, []);
+  };
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -98,6 +72,51 @@ export default function Navbar() {
       console.error("Error fetching unread count:", error);
     }
   };
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+    
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+      fetchUserProfile(JSON.parse(userData).id, token);
+      fetchNotifications();
+      fetchUnreadCount();
+      
+      // Initialize Socket.io connection
+      socketRef.current = io("http://localhost:5000", {
+        auth: {
+          token: token
+        }
+      });
+
+      // Listen for new notifications
+      socketRef.current.on("new-notification", (notification) => {
+        console.log("New notification received:", notification);
+        setNotifications((prev) => [notification, ...prev.slice(0, 4)]);
+      });
+
+      // Listen for unread count updates
+      socketRef.current.on("unread-count-update", (count) => {
+        console.log("Unread count updated:", count);
+        setUnreadCount(count);
+      });
+
+      // Handle connection errors
+      socketRef.current.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+      });
+
+      // Cleanup on unmount
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+        }
+      };
+    }
+  }, []);
 
   // Mark notification as read
   const markAsRead = async (notificationId) => {
@@ -145,7 +164,6 @@ export default function Navbar() {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
-  const handleLogin = () => setIsLoggedIn(true);
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -310,7 +328,11 @@ export default function Navbar() {
                   <button className="user-profile-btn" onClick={toggleUserMenu}>
                     <div className="user-avatar">
                       <img 
-                        src={`https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`} 
+                        src={
+                          profileImage 
+                            ? `http://localhost:5000${profileImage}`
+                            : `https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`
+                        } 
                         alt={userName} 
                       />
                     </div>
@@ -322,7 +344,11 @@ export default function Navbar() {
                       <div className="dropdown-header">
                         <div className="dropdown-avatar">
                           <img 
-                            src={`https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`} 
+                            src={
+                              profileImage 
+                                ? `http://localhost:5000${profileImage}`
+                                : `https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`
+                            } 
                             alt={userName} 
                           />
                         </div>
@@ -409,7 +435,11 @@ export default function Navbar() {
               <>
                 <div className="mobile-user-avatar-large">
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`} 
+                    src={
+                      profileImage 
+                        ? `http://localhost:5000${profileImage}`
+                        : `https://ui-avatars.com/api/?name=${userName}&background=1B2688&color=fff&bold=true`
+                    } 
                     alt={userName} 
                   />
                 </div>

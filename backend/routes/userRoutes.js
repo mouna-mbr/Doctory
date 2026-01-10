@@ -1,6 +1,7 @@
 const express = require("express");
 const UserController = require("../controllers/UserController");
 const { authMiddleware, roleMiddleware } = require("../middlewares/authMiddleware");
+const upload = require("../config/upload");
 
 const router = express.Router();
 router.get("/doctors", UserController.getDoctors.bind(UserController));
@@ -52,6 +53,13 @@ router.delete(
   "/:id",
   roleMiddleware("ADMIN"),
   UserController.deleteUser.bind(UserController)
+);
+
+// Upload profile image (User can upload their own, Admin can upload for anyone)
+router.post(
+  "/:id/upload-profile-image",
+  upload.single("profileImage"),
+  UserController.uploadProfileImage.bind(UserController)
 );
 
 module.exports = router;

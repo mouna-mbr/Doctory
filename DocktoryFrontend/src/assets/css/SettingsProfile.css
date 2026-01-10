@@ -39,7 +39,9 @@
 
 .profile-photo-section {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
   margin-bottom: 30px;
 }
 
@@ -66,6 +68,26 @@
   border-radius: 50%;
   padding: 8px;
   cursor: pointer;
+  transition: background 0.3s;
+}
+
+.upload-btn:hover {
+  background: #01052c;
+}
+
+.upload-image-btn {
+  padding: 10px 20px;
+  background: #1b2688;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.upload-image-btn:hover {
+  background: #01052c;
 }
 
 .settings-form {

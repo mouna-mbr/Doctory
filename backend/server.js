@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const path = require("path");
 const connectDB = require("./config/db");
 const { initializeSocket } = require("./config/socket");
 require("dotenv").config();
@@ -11,6 +12,9 @@ const server = http.createServer(app);
 // middlewares
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Ajoutez ce middleware de debug
 app.use((req, res, next) => {

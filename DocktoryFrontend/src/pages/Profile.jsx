@@ -293,7 +293,11 @@ const Profile = () => {
       {/* SIDEBAR */}
       <aside className="profile-sidebar">
         <img 
-          src={`https://ui-avatars.com/api/?name=${user.fullName}&background=1B2688&color=fff&size=150`} 
+          src={
+            user.profileImage 
+              ? `http://localhost:5000${user.profileImage}`
+              : `https://ui-avatars.com/api/?name=${user.fullName}&background=1B2688&color=fff&size=150`
+          } 
           alt="profile" 
           className="profile-avatar" 
         />

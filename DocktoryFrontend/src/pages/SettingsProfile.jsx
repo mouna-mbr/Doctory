@@ -13,6 +13,8 @@ const SettingsProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -64,6 +66,11 @@ const SettingsProfile = () => {
             pharmacyAddress: user.pharmacyAddress || "",
             dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : "",
           });
+          
+          // Set profile image if exists
+          if (user.profileImage) {
+            setImagePreview(`http://localhost:5000${user.profileImage}`);
+          }
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -78,6 +85,57 @@ const SettingsProfile = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!profileImage) {
+      setMessage("Veuillez sélectionner une image");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const formDataUpload = new FormData();
+      formDataUpload.append("profileImage", profileImage);
+
+      const response = await fetch(
+        `http://localhost:5000/api/users/${userId}/upload-profile-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataUpload,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage("Photo de profil mise à jour avec succès!");
+        setProfileImage(null);
+        // Update the image preview with the new path
+        setImagePreview(`http://localhost:5000${data.data.profileImage}`);
+      } else {
+        setMessage(data.message || "Erreur lors de l'upload");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      setMessage("Erreur lors de l'upload de l'image");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -128,14 +186,26 @@ const SettingsProfile = () => {
       <div className="profile-photo-section">
         <div className="photo-wrapper">
           <img
-            src={`https://ui-avatars.com/api/?name=${formData.fullName}&background=1B2688&color=fff&size=200`}
+            src={
+              imagePreview ||
+              `https://ui-avatars.com/api/?name=${formData.fullName}&background=1B2688&color=fff&size=200`
+            }
             alt="Profile"
           />
           <label className="upload-btn">
             <FaCamera />
-            <input type="file" hidden />
+            <input type="file" accept="image/*" onChange={handleImageChange} hidden />
           </label>
         </div>
+        {profileImage && (
+          <button
+            type="button"
+            className="upload-image-btn"
+            onClick={handleImageUpload}
+          >
+            Télécharger l'image
+          </button>
+        )}
       </div>
 
       {/* FORM */}
