@@ -8,9 +8,9 @@ import Profile from "./pages/Profile";
 import SettingsProfile from "./pages/SettingsProfile";
 import Dossier from "./pages/Dossier";
 import Doctors from "./pages/Doctors";
-import AppointmentBooking from "./pages/AppointmentBooking"; // 👈 rendez-vous
+import AppointmentBooking from "./pages/AppointmentBooking";
 import DoctorAppointments from "./pages/DoctorAppointments";
-
+import AppointmentPage from "./pages/AppointmentPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -90,25 +90,35 @@ function App() {
           }
         />
 
-        {/* Rendez-vous (Doctory) */}
+        {/* Rendez-vous - Utilisez AppointmentPage qui récupère les données */}
         <Route
-          path="/appointments"
+          path="/appointment/:doctorId"
+          element={
+            <MainLayout>
+              <AppointmentPage />
+            </MainLayout>
+          }
+        />
+
+        {/* Gardez l'ancienne route pour compatibilité */}
+        <Route
+          path="/appointment-booking"
           element={
             <MainLayout>
               <AppointmentBooking />
             </MainLayout>
           }
         />
+
+        {/* Rendez-vous du docteur */}
         <Route
           path="/doctor/appointments"
           element={
-            <>
-              <Navbar />
+            <MainLayout>
               <DoctorAppointments />
-              <Footer />
-            </>
+            </MainLayout>
           }
-      />
+        />
 
       </Routes>
     </BrowserRouter>

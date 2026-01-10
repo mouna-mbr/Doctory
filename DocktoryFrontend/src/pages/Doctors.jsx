@@ -279,14 +279,20 @@ const Doctors = () => {
     setSelectedLocation("");
   };
 
-  const handleBookAppointment = (doctorId, doctorName) => {
-    if (!localStorage.getItem("token")) {
-      alert("Veuillez vous connecter pour prendre un rendez-vous");
-      window.location.href = "/signin";
-      return;
-    }
-    window.location.href = `/appointment/${doctorId}?doctor=${encodeURIComponent(doctorName)}`;
-  };
+const handleBookAppointment = (doctor) => {
+  if (!localStorage.getItem("token")) {
+    alert("Veuillez vous connecter pour prendre un rendez-vous");
+    window.location.href = "/signin";
+    return;
+  }
+  
+  // Passez toutes les informations nécessaires avec encodeURIComponent
+  const encodedName = encodeURIComponent(doctor.name);
+  const encodedSpecialty = encodeURIComponent(doctor.specialty);
+  
+  window.location.href = `/appointment/${doctor.id}?doctor=${encodedName}&specialty=${encodedSpecialty}`;
+};
+
 
   const handleLogin = () => {
     window.location.href = "/signin";
@@ -493,7 +499,7 @@ const Doctors = () => {
                     
                     <button 
                       className="appointment-btn"
-                      onClick={() => handleBookAppointment(doctor.id, doctor.name)}
+                      onClick={() => handleBookAppointment(doctor)}
                       disabled={!doctor.isAvailable}
                     >
                       <FaCalendarAlt /> Prendre RDV
