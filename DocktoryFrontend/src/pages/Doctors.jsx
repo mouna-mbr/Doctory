@@ -466,7 +466,7 @@ const handleBookAppointment = (doctor) => {
                   </div>
                 </div>
 
-                <div className="doctor-info">
+                <div className="doctor-info-list">
                   <h3>{doctor.name}</h3>
                   <p className="specialty">{doctor.specialty}</p>
                   

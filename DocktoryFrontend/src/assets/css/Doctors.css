@@ -51,11 +51,11 @@
 }
 
 /* INFO */
-.doctor-info {
+.doctor-info-list {
   text-align: center;
 }
 
-.doctor-info h3 {
+.doctor-info-list h3 {
   color: #01052c;
   font-size: 20px;
 }
