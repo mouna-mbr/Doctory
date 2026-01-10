@@ -13,6 +13,7 @@ import DoctorAppointments from "./pages/DoctorAppointments";
 import AppointmentPage from "./pages/AppointmentPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import MyAppointments from "./pages/MyAppointments";
 
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -120,6 +121,15 @@ function App() {
           }
         />
 
+
+        <Route
+          path="/my-appointments"
+          element={
+            <MainLayout>
+              <MyAppointments />
+            </MainLayout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

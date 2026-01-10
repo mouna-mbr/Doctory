@@ -367,7 +367,7 @@ export default function Navbar() {
                           </div>
                         </a>
                         
-                        <a href="/appointments" className="dropdown-item" onClick={closeMenu}>
+                        <a href="/my-appointments" className="dropdown-item" onClick={closeMenu}>
                           <FaCalendarAlt />
                           <div className="dropdown-item-content">
                             <span className="dropdown-item-title">Mes Rendez-vous</span>
@@ -492,7 +492,7 @@ export default function Navbar() {
                   <FaUser />
                   <span>Mon Profil</span>
                 </a>
-                <a href="/appointments" className="mobile-nav-item" onClick={closeMenu}>
+                <a href="/my-appointments" className="mobile-nav-item" onClick={closeMenu}>
                   <FaCalendarAlt />
                   <span>Mes Rendez-vous</span>
                 </a>
