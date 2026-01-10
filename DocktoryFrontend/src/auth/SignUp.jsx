@@ -1,12 +1,15 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaStethoscope, FaPills, FaHeartbeat, FaSyringe, FaFlask } from "react-icons/fa"
+import ReCAPTCHA from "react-google-recaptcha"
 import "../assets/css/SignUp.css"
 import logo from "../assets/photos/logobgWhite.png"
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const recaptchaRef = useRef();
   const [role, setRole] = useState("");
+  const [captchaValue, setCaptchaValue] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -60,6 +63,12 @@ const SignUp = () => {
       return;
     }
 
+    // Validate reCAPTCHA
+    if (!captchaValue) {
+      setError("Veuillez compléter le reCAPTCHA");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -103,22 +112,18 @@ const SignUp = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Store token and user info in localStorage
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
+        // Show success message about email verification
+        setError("");
+        alert(data.message || "Compte créé ! Veuillez vérifier votre email pour activer votre compte.");
         
-        // Redirect to home or dashboard
-        if (data.data.user.role === "ADMIN") {
-          navigate("/admin/dashboard");
-        } else {
-          navigate("/");
-        }
+        // Redirect to signin
+        navigate("/signin");
       } else {
         setError(data.message || "Inscription échouée");
       }
     } catch (err) {
-      setError("Une erreur s'est produite. Veuillez réessayer.");
       console.error("Signup error:", err);
+      setError("Une erreur s'est produite. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -316,6 +321,14 @@ const SignUp = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required 
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", margin: "15px 0" }}>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={(value) => setCaptchaValue(value)}
             />
           </div>
 

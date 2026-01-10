@@ -1,17 +1,20 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaStethoscope, FaPills, FaHeartbeat, FaSyringe, FaFlask } from "react-icons/fa"
+import ReCAPTCHA from "react-google-recaptcha"
 import "../assets/css/SignIn.css"
 import logo from '../assets/photos/logobgWhite.png'; 
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const recaptchaRef = useRef();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -24,6 +27,13 @@ const SignIn = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validate reCAPTCHA
+    if (!captchaValue) {
+      setError("Veuillez compléter le reCAPTCHA");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -48,11 +58,11 @@ const SignIn = () => {
           navigate("/");
         }
       } else {
-        setError(data.message || "Login failed");
+        setError(data.message || "Email ou mot de passe incorrect");
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
       console.error("Login error:", err);
+      setError("Une erreur est survenue. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -107,10 +117,22 @@ const SignIn = () => {
             required 
           />
 
+          <div style={{ display: "flex", justifyContent: "center", margin: "15px 0" }}>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={(value) => setCaptchaValue(value)}
+            />
+          </div>
+
           <button type="submit" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
+
+        <p className="switch" style={{ marginTop: "10px" }}>
+          <a href="/forgot-password">Mot de passe oublié ?</a>
+        </p>
 
         <p className="switch">
           Pas encore de compte ? <a href="/signup">Créer un compte</a>

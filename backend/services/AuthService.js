@@ -1,6 +1,10 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const UserRepository = require("../repositories/UserRepository");
+const PasswordReset = require("../models/PasswordReset");
+const EmailVerification = require("../models/EmailVerification");
+const { sendPasswordResetEmail, sendVerificationEmail } = require("../config/email");
 
 class AuthService {
   // Generate JWT token
@@ -25,14 +29,35 @@ class AuthService {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(userData.password, salt);
 
-      // Create user without password field
+      // Create user without password field and set email as not verified
       const { password, ...userDataWithoutPassword } = userData;
       const newUser = await UserRepository.create({
         ...userDataWithoutPassword,
         passwordHash,
+        isEmailVerified: false,
       });
 
-      // Generate token
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Save verification token to database
+      await EmailVerification.create({
+        userId: newUser._id,
+        email: newUser.email,
+        verificationToken,
+        expiresAt,
+      });
+
+      // Send verification email
+      try {
+        await sendVerificationEmail(newUser.email, verificationToken, newUser.fullName);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // Continue with registration even if email fails
+      }
+
+      // Generate token (user can still browse but some features may be restricted)
       const token = this.generateToken(newUser._id, newUser.role);
 
       // Return user without password hash
@@ -44,9 +69,11 @@ class AuthService {
           email: newUser.email,
           phoneNumber: newUser.phoneNumber,
           isActive: newUser.isActive,
+          isEmailVerified: newUser.isEmailVerified,
           createdAt: newUser.createdAt,
         },
         token,
+        message: "Account created! Please check your email to verify your account.",
       };
     } catch (error) {
       throw error;
@@ -65,6 +92,11 @@ class AuthService {
       // Check if user is active
       if (!user.isActive) {
         throw new Error("Account is deactivated");
+      }
+
+      // Check if email is verified
+      if (!user.isEmailVerified) {
+        throw new Error("Please verify your email before logging in. Check your inbox for the verification link.");
       }
 
       // Verify password
@@ -88,6 +120,7 @@ class AuthService {
           email: user.email,
           phoneNumber: user.phoneNumber,
           isActive: user.isActive,
+          isEmailVerified: user.isEmailVerified,
           createdAt: user.createdAt,
           lastLoginAt: new Date(),
         },
@@ -132,6 +165,172 @@ class AuthService {
       return { message: "Password changed successfully" };
     } catch (error) {
       throw error;
+    }
+  }
+
+  // Request password reset
+  async requestPasswordReset(email) {
+    try {
+      // Find user by email
+      const user = await UserRepository.findByEmail(email);
+      if (!user) {
+        // For security, don't reveal if email exists
+        return { message: "If an account exists with this email, a reset code has been sent." };
+      }
+
+      // Generate 6-digit code
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Set expiration time (10 minutes from now)
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Delete any existing reset codes for this user
+      await PasswordReset.deleteMany({ userId: user._id });
+
+      // Save reset code to database
+      await PasswordReset.create({
+        userId: user._id,
+        email: user.email,
+        resetCode,
+        expiresAt,
+      });
+
+      // Send email with reset code
+      await sendPasswordResetEmail(user.email, resetCode);
+
+      return { message: "If an account exists with this email, a reset code has been sent." };
+    } catch (error) {
+      console.error("Password reset error:", error);
+      throw new Error("Failed to process password reset request");
+    }
+  }
+
+  // Verify reset code
+  async verifyResetCode(email, code) {
+    try {
+      // Find valid reset code
+      const resetRequest = await PasswordReset.findOne({
+        email,
+        resetCode: code,
+        isUsed: false,
+        expiresAt: { $gt: new Date() },
+      });
+
+      if (!resetRequest) {
+        throw new Error("Invalid or expired reset code");
+      }
+
+      return { valid: true };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Reset password with code
+  async resetPassword(email, code, newPassword) {
+    try {
+      // Find valid reset code
+      const resetRequest = await PasswordReset.findOne({
+        email,
+        resetCode: code,
+        isUsed: false,
+        expiresAt: { $gt: new Date() },
+      });
+
+      if (!resetRequest) {
+        throw new Error("Invalid or expired reset code");
+      }
+
+      // Find user
+      const user = await UserRepository.findByEmail(email);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(10);
+      const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+      // Update password
+      await UserRepository.update(user._id, { passwordHash: newPasswordHash });
+
+      // Mark reset code as used
+      await PasswordReset.updateOne(
+        { _id: resetRequest._id },
+        { isUsed: true }
+      );
+
+      return { message: "Password reset successfully" };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Verify email with token
+  async verifyEmail(token) {
+    try {
+      // Find verification record
+      const verification = await EmailVerification.findOne({
+        verificationToken: token,
+        isVerified: false,
+        expiresAt: { $gt: new Date() },
+      });
+
+      if (!verification) {
+        throw new Error("Invalid or expired verification link");
+      }
+
+      // Update user email verification status
+      await UserRepository.update(verification.userId, { isEmailVerified: true });
+
+      // Mark verification as completed
+      await EmailVerification.updateOne(
+        { _id: verification._id },
+        { isVerified: true, verifiedAt: new Date() }
+      );
+
+      return { message: "Email verified successfully! You can now log in." };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Resend verification email
+  async resendVerificationEmail(email) {
+    try {
+      // Find user
+      const user = await UserRepository.findByEmail(email);
+      if (!user) {
+        // For security, don't reveal if email exists
+        return { message: "If an account exists with this email, a verification link has been sent." };
+      }
+
+      if (user.isEmailVerified) {
+        throw new Error("Email is already verified");
+      }
+
+      // Delete old verification tokens for this user
+      await EmailVerification.deleteMany({ userId: user._id });
+
+      // Generate new verification token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Save new verification token
+      await EmailVerification.create({
+        userId: user._id,
+        email: user.email,
+        verificationToken,
+        expiresAt,
+      });
+
+      // Send verification email
+      await sendVerificationEmail(user.email, verificationToken, user.fullName);
+
+      return { message: "If an account exists with this email, a verification link has been sent." };
+    } catch (error) {
+      console.error("Resend verification error:", error);
+      throw new Error("Failed to resend verification email");
     }
   }
 }

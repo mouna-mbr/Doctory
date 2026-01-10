@@ -140,6 +140,187 @@ class AuthController {
       });
     }
   }
+
+  // Request password reset
+  async requestPasswordReset(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required",
+        });
+      }
+
+      const result = await AuthService.requestPasswordReset(email);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Verify reset code
+  async verifyResetCode(req, res) {
+    try {
+      const { email, code } = req.body;
+
+      if (!email || !code) {
+        return res.status(400).json({
+          success: false,
+          message: "Email and code are required",
+        });
+      }
+
+      const result = await AuthService.verifyResetCode(email, code);
+
+      res.status(200).json({
+        success: true,
+        message: "Code verified successfully",
+        data: result,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Reset password
+  async resetPassword(req, res) {
+    try {
+      const { email, code, newPassword } = req.body;
+
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Email, code, and new password are required",
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters",
+        });
+      }
+
+      const result = await AuthService.resetPassword(email, code, newPassword);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Verify email
+  async verifyEmail(req, res) {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: "Verification token is required",
+        });
+      }
+
+      const result = await AuthService.verifyEmail(token);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Resend verification email
+  async resendVerification(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required",
+        });
+      }
+
+      const result = await AuthService.resendVerificationEmail(email);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Manual verification (for testing/admin purposes)
+  async manualVerifyUser(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is required",
+        });
+      }
+
+      const UserRepository = require("../repositories/UserRepository");
+      
+      // Find user by email
+      const user = await UserRepository.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      // Update user verification status
+      await UserRepository.update(user._id, { isEmailVerified: true });
+
+      res.status(200).json({
+        success: true,
+        message: `User ${email} has been manually verified`,
+        data: {
+          email: user.email,
+          fullName: user.fullName,
+          isEmailVerified: true,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new AuthController();

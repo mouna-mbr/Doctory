@@ -7,6 +7,14 @@ const router = express.Router();
 // Public routes
 router.post("/register", AuthController.register.bind(AuthController));
 router.post("/login", AuthController.login.bind(AuthController));
+router.post("/forgot-password", AuthController.requestPasswordReset.bind(AuthController));
+router.post("/verify-reset-code", AuthController.verifyResetCode.bind(AuthController));
+router.post("/reset-password", AuthController.resetPassword.bind(AuthController));
+router.post("/verify-email", AuthController.verifyEmail.bind(AuthController));
+router.post("/resend-verification", AuthController.resendVerification.bind(AuthController));
+
+// Manual verification route (for testing/admin)
+router.post("/manual-verify", AuthController.manualVerifyUser.bind(AuthController));
 
 // Protected routes
 router.post(

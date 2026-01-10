@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
+import ForgotPassword from "./auth/ForgotPassword";
+import VerifyEmail from "./auth/VerifyEmail";
 
 import Accueil from "./pages/Accueil";
 import Profile from "./pages/Profile";
@@ -37,6 +39,8 @@ function App() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Admin */}
         <Route path="/admin/*" element={<AdminLayout />}>

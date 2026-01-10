@@ -17,6 +17,7 @@ import {
   FaUsers,
   FaCalendarDay
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 import "../assets/css/MyAppointments.css";
 
 // Import du composant calendrier pour les médecins
@@ -317,13 +318,24 @@ const MyAppointments = () => {
         setSelectedAppointment(null);
         
         // Afficher un message de succès
-        alert("Le rendez-vous a été annulé avec succès.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Rendez-vous annulé',
+          text: 'Le rendez-vous a été annulé avec succès.',
+          confirmButtonColor: '#27ae60',
+          timer: 3000
+        });
       } else {
         throw new Error(data.message || "Erreur lors de l'annulation");
       }
     } catch (err) {
       console.error("Error cancelling appointment:", err);
-      alert(`Erreur lors de l'annulation: ${err.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: `Erreur lors de l'annulation: ${err.message}`,
+        confirmButtonColor: '#e74c3c'
+      });
     } finally {
       setCancelling(false);
     }
@@ -353,13 +365,24 @@ const MyAppointments = () => {
         setAppointments(prev => prev.map(app => 
           app._id === appointmentId ? { ...app, status: "CONFIRMED" } : app
         ));
-        alert("Le rendez-vous a été confirmé avec succès.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Rendez-vous confirmé',
+          text: 'Le rendez-vous a été confirmé avec succès.',
+          confirmButtonColor: '#27ae60',
+          timer: 3000
+        });
       } else {
         throw new Error(data.message || "Erreur lors de la confirmation");
       }
     } catch (err) {
       console.error("Error confirming appointment:", err);
-      alert(`Erreur lors de la confirmation: ${err.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: `Erreur lors de la confirmation: ${err.message}`,
+        confirmButtonColor: '#e74c3c'
+      });
     }
   };
 
@@ -387,13 +410,24 @@ const MyAppointments = () => {
         setAppointments(prev => prev.map(app => 
           app._id === appointmentId ? { ...app, status: "COMPLETED" } : app
         ));
-        alert("Le rendez-vous a été marqué comme terminé.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Rendez-vous terminé',
+          text: 'Le rendez-vous a été marqué comme terminé.',
+          confirmButtonColor: '#3498db',
+          timer: 3000
+        });
       } else {
         throw new Error(data.message || "Erreur lors de la complétion");
       }
     } catch (err) {
       console.error("Error completing appointment:", err);
-      alert(`Erreur lors de la complétion: ${err.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: `Erreur lors de la complétion: ${err.message}`,
+        confirmButtonColor: '#e74c3c'
+      });
     }
   };
 
