@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import "../assets/css/Doctors.css";
-import { FaStar, FaUserMd, FaSearch, FaMapMarkerAlt, FaCalendarAlt, FaFilter, FaExclamationTriangle } from "react-icons/fa";
+import { FaStar, FaUserMd, FaSearch, FaMapMarkerAlt, FaCalendarAlt, FaFilter, FaExclamationTriangle, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [apiSource, setApiSource] = useState(""); // Pour savoir d'où viennent les données
+  const [apiSource, setApiSource] = useState("");
   
   // États pour les filtres
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,12 +20,45 @@ const Doctors = () => {
   // États pour les spécialités et lieux uniques
   const [specialties, setSpecialties] = useState([]);
   const [locations, setLocations] = useState([]);
+  
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [doctorsPerPage, setDoctorsPerPage] = useState(6); // Nombre de médecins par page
+  
+  // États pour l'utilisateur connecté
+  const [currentUser, setCurrentUser] = useState(null);
 
   const API_BASE_URL = "http://localhost:5000/api";
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchDoctors();
+       //   console.log("Current user ID:", currentUser._id || currentUser.id);
+
   }, []);
+
+  // Récupérer l'utilisateur connecté
+  const fetchCurrentUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setCurrentUser(data.data);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Error fetching current user:", err);
+    }
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -37,11 +70,10 @@ const Doctors = () => {
       const token = localStorage.getItem("token");
       console.log("Token available:", !!token);
       
-      // Essayer plusieurs endpoints dans l'ordre
       let doctorsData = null;
       let source = "";
       
-      // ESSAI 1: Endpoint public (si vous l'avez créé)
+      // ESSAI 1: Endpoint public
       try {
         console.log("Trying public endpoint /api/users/doctors...");
         const response = await fetch(`${API_BASE_URL}/users/doctors`);
@@ -71,7 +103,6 @@ const Doctors = () => {
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.data) {
-              // Filtrer seulement les docteurs
               doctorsData = data.data.filter(user => 
                 user.role === "DOCTOR" && user.isActive !== false
               );
@@ -86,7 +117,7 @@ const Doctors = () => {
         }
       }
       
-      // ESSAI 3: Endpoint par rôle (peut être public)
+      // ESSAI 3: Endpoint par rôle
       if (!doctorsData) {
         try {
           console.log("Trying role endpoint /api/users/role/DOCTOR...");
@@ -104,7 +135,7 @@ const Doctors = () => {
         }
       }
       
-      // ESSAI 4: Votre endpoint d'origine qui retourne 401
+      // ESSAI 4: Votre endpoint d'origine
       if (!doctorsData) {
         try {
           console.log("Trying original endpoint...");
@@ -118,7 +149,6 @@ const Doctors = () => {
             }
           } else {
             console.log("Original endpoint status:", response.status);
-            // Même si c'est 401, on peut extraire l'info que l'API répond
             setError(`L'API nécessite une authentification (${response.status}). Connectez-vous pour voir plus de détails.`);
             setApiSource("api_with_auth_required");
           }
@@ -131,7 +161,6 @@ const Doctors = () => {
       if (doctorsData && doctorsData.length > 0) {
         processDoctorsData(doctorsData, source);
       } else {
-        // Si aucune donnée n'a été récupérée, utiliser les données mock
         console.log("No data from API, using mock data");
         const mockDoctors = getMockDoctors();
         processDoctorsData(mockDoctors, "mock");
@@ -142,7 +171,6 @@ const Doctors = () => {
       console.error("❌ Error in fetchDoctors:", err);
       setError(err.message);
       
-      // Fallback vers les données mock
       const mockDoctors = getMockDoctors();
       processDoctorsData(mockDoctors, "mock_fallback");
     } finally {
@@ -166,7 +194,8 @@ const Doctors = () => {
       email: doctor.email || "Non disponible",
       isAvailable: doctor.isAvailable !== false,
       description: doctor.description || doctor.bio || "Médecin professionnel",
-      rawData: doctor
+      rawData: doctor,
+      userId: doctor._id || doctor.id // Ajouter l'ID de l'utilisateur docteur
     };
   };
 
@@ -174,12 +203,14 @@ const Doctors = () => {
   const processDoctorsData = (doctorsList, source) => {
     console.log(`Processing doctors from ${source}:`, doctorsList);
     
-    // Formater les données
     const formattedDoctors = doctorsList.map(formatDoctorData);
     
     setDoctors(formattedDoctors);
     setFilteredDoctors(formattedDoctors);
     setApiSource(source);
+    
+    // Réinitialiser à la page 1 quand les données changent
+    setCurrentPage(1);
     
     // Extraire les spécialités uniques
     const uniqueSpecialties = [...new Set(formattedDoctors
@@ -198,8 +229,6 @@ const Doctors = () => {
     setLocations(uniqueLocations);
     
     console.log(`✅ Processed ${formattedDoctors.length} doctors from ${source}`);
-    console.log("Specialties:", uniqueSpecialties);
-    console.log("Locations:", uniqueLocations);
   };
 
   const getMockDoctors = () => {
@@ -271,28 +300,65 @@ const Doctors = () => {
     }
     
     setFilteredDoctors(filtered);
+    setCurrentPage(1); // Réinitialiser à la page 1 quand les filtres changent
   }, [searchTerm, selectedSpecialty, selectedLocation, doctors]);
+
+  // Fonction pour la pagination
+  const indexOfLastDoctor = currentPage * doctorsPerPage;
+  const indexOfFirstDoctor = indexOfLastDoctor - doctorsPerPage;
+  const currentDoctors = filteredDoctors.slice(indexOfFirstDoctor, indexOfLastDoctor);
+  
+  const totalPages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+  
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedSpecialty("");
     setSelectedLocation("");
+    setCurrentPage(1);
   };
 
-const handleBookAppointment = (doctor) => {
-  if (!localStorage.getItem("token")) {
-    alert("Veuillez vous connecter pour prendre un rendez-vous");
-    window.location.href = "/signin";
-    return;
-  }
-  
-  // Passez toutes les informations nécessaires avec encodeURIComponent
-  const encodedName = encodeURIComponent(doctor.name);
-  const encodedSpecialty = encodeURIComponent(doctor.specialty);
-  
-  window.location.href = `/appointment/${doctor.id}?doctor=${encodedName}&specialty=${encodedSpecialty}`;
-};
+  const handleBookAppointment = (doctor) => {
+    // Vérifier si l'utilisateur est connecté
+    if (!localStorage.getItem("token")) {
+      alert("Veuillez vous connecter pour prendre un rendez-vous");
+      window.location.href = "/signin";
+      return;
+    }
+      console.log("Current user ID:", currentUser);
 
+    // Vérifier si l'utilisateur connecté est un docteur
+    if (currentUser && currentUser.role === "DOCTOR") {
+      // Vérifier si le docteur essaie de prendre RDV avec lui-même
+      if (currentUser._id === doctor.userId || currentUser.id === doctor.userId) {
+        alert("Vous ne pouvez pas prendre rendez-vous avec vous-même.");
+        return;
+      }
+      
+      // Vérifier si le docteur essaie de prendre RDV avec un autre docteur
+      alert("Les docteurs ne peuvent pas prendre rendez-vous avec d'autres docteurs.");
+      return;
+    }
+    
+    // Passez toutes les informations nécessaires avec encodeURIComponent
+    const encodedName = encodeURIComponent(doctor.name);
+    const encodedSpecialty = encodeURIComponent(doctor.specialty);
+    
+    window.location.href = `/appointment/${doctor.id}?doctor=${encodedName}&specialty=${encodedSpecialty}`;
+  };
 
   const handleLogin = () => {
     window.location.href = "/signin";
@@ -330,29 +396,30 @@ const handleBookAppointment = (doctor) => {
         )}
       </div>
 
-          {/* Statistiques */}
-          <div className="stats-container">
-            <div className="stat-card">
-              <h4>Total médecins</h4>
-              <p className="stat-number">{doctors.length}</p>
-            </div>
-            <div className="stat-card">
-              <h4>Spécialités</h4>
-              <p className="stat-number">{specialties.length}</p>
-            </div>
-            <div className="stat-card">
-              <h4>Villes</h4>
-              <p className="stat-number">{locations.length}</p>
-            </div>
-            <div className="stat-card">
-              <h4>Prix moyen</h4>
-              <p className="stat-number">
-                {doctors.length > 0 
-                  ? Math.round(doctors.reduce((sum, doc) => sum + doc.price, 0) / doctors.length)
-                  : 0} DT
-              </p>
-            </div>
-          </div>
+      {/* Statistiques */}
+      <div className="stats-container">
+        <div className="stat-card">
+          <h4>Total médecins</h4>
+          <p className="stat-number">{doctors.length}</p>
+        </div>
+        <div className="stat-card">
+          <h4>Spécialités</h4>
+          <p className="stat-number">{specialties.length}</p>
+        </div>
+        <div className="stat-card">
+          <h4>Villes</h4>
+          <p className="stat-number">{locations.length}</p>
+        </div>
+        <div className="stat-card">
+          <h4>Prix moyen</h4>
+          <p className="stat-number">
+            {doctors.length > 0 
+              ? Math.round(doctors.reduce((sum, doc) => sum + doc.price, 0) / doctors.length)
+              : 0} DT
+          </p>
+        </div>
+      </div>
+
       {/* Message d'information */}
       {error && (
         <div className={`info-message ${apiSource.includes('mock') ? 'warning' : 'info'}`}>
@@ -438,6 +505,15 @@ const handleBookAppointment = (doctor) => {
         </div>
       )}
 
+      {/* Message pour les docteurs connectés */}
+      {currentUser && currentUser.role === "DOCTOR" && (
+        <div className="doctor-note">
+          <p>
+            <strong>Note :</strong> En tant que médecin, vous ne pouvez pas prendre rendez-vous avec d'autres médecins.
+          </p>
+        </div>
+      )}
+
       {/* Liste des médecins */}
       {filteredDoctors.length === 0 ? (
         <div className="no-results">
@@ -457,7 +533,7 @@ const handleBookAppointment = (doctor) => {
       ) : (
         <>
           <div className="doctors-grid">
-            {filteredDoctors.map((doctor) => (
+            {currentDoctors.map((doctor) => (
               <div className="doctor-card" key={doctor.id}>
                 <div className="doctor-photo">
                   <img src={doctor.photo} alt={doctor.name} />
@@ -500,11 +576,17 @@ const handleBookAppointment = (doctor) => {
                     <button 
                       className="appointment-btn"
                       onClick={() => handleBookAppointment(doctor)}
-                      disabled={!doctor.isAvailable}
+                      disabled={!doctor.isAvailable || (currentUser && currentUser.role === "DOCTOR")}
                     >
                       <FaCalendarAlt /> Prendre RDV
                     </button>
                   </div>
+
+                  {currentUser && currentUser.role === "DOCTOR" && (
+                    <div className="doctor-restriction">
+                      <small>Non disponible pour les médecins</small>
+                    </div>
+                  )}
 
                   <div className="contact-info">
                     <p>📞 {doctor.phone}</p>
@@ -521,10 +603,86 @@ const handleBookAppointment = (doctor) => {
             ))}
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pagination-container">
+              <div className="pagination-info">
+                Affichage {indexOfFirstDoctor + 1}-{Math.min(indexOfLastDoctor, filteredDoctors.length)} sur {filteredDoctors.length} médecins
+              </div>
+              
+              <div className="pagination-controls">
+                <button 
+                  onClick={prevPage} 
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  <FaArrowLeft /> Précédent
+                </button>
+                
+                <div className="pagination-numbers">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Afficher seulement quelques pages autour de la page actuelle
+                      return page === 1 || 
+                             page === totalPages || 
+                             (page >= currentPage - 1 && page <= currentPage + 1);
+                    })
+                    .map((page, index, array) => {
+                      // Ajouter des points de suspension si nécessaire
+                      if (index > 0 && page - array[index - 1] > 1) {
+                        return (
+                          <React.Fragment key={`dots-${page}`}>
+                            <span className="pagination-dots">...</span>
+                            <button
+                              onClick={() => paginate(page)}
+                              className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                            >
+                              {page}
+                            </button>
+                          </React.Fragment>
+                        );
+                      }
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => paginate(page)}
+                          className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                </div>
+                
+                <button 
+                  onClick={nextPage} 
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  Suivant <FaArrowRight />
+                </button>
+              </div>
+              
+              {/* Sélecteur d'éléments par page */}
+              <div className="per-page-selector">
+                <label>Afficher : </label>
+                <select
+                  value={doctorsPerPage}
+                  onChange={(e) => {
+                    setDoctorsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={3}>3</option>
+                  <option value={6}>6</option>
+                  <option value={9}>9</option>
+                  <option value={12}>12</option>
+                </select>
+              </div>
+            </div>
+          )}
         </>
       )}
-
-    
     </div>
   );
 };

@@ -1,8 +1,10 @@
 const express = require("express");
 const AuthController = require("../controllers/AuthController");
+
 const { authMiddleware } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
+
 
 // Public routes
 router.post("/register", AuthController.register.bind(AuthController));
@@ -26,6 +28,12 @@ router.get(
   "/profile",
   authMiddleware,
   AuthController.getProfile.bind(AuthController)
+);
+// Route supplémentaire pour /me (plus courant dans les APIs REST)
+router.get(
+  "/me",
+  authMiddleware,
+  AuthController.getProfile.bind(AuthController) // Utilise la même méthode
 );
 
 module.exports = router;

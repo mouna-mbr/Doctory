@@ -543,3 +543,150 @@
           font-weight: 600;
         }
         }
+/* Styles pour la pagination */
+.pagination-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  background-color: #1B2688;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #0e1a6b;
+}
+
+.pagination-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-page {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  color: #1B2688;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  min-width: 40px;
+}
+
+.pagination-page:hover {
+  background-color: #f1f3ff;
+  border-color: #1B2688;
+}
+
+.pagination-page.active {
+  background-color: #1B2688;
+  color: white;
+  border-color: #1B2688;
+}
+
+.pagination-dots {
+  color: #6c757d;
+  padding: 0 0.5rem;
+}
+
+.per-page-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.per-page-selector select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: white;
+  color: #495057;
+}
+
+/* Styles pour les restrictions des médecins */
+.doctor-note {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.doctor-restriction {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Désactiver le bouton pour les médecins */
+.appointment-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pagination-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .pagination-numbers {
+    order: 1;
+  }
+  
+  .pagination-btn {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .per-page-selector {
+    order: 3;
+    margin-top: 0.5rem;
+  }
+}
