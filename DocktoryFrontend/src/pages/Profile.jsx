@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { FaCalendarAlt, FaClock, FaCalendarPlus, FaCalendarCheck, FaCalendarTimes } from "react-icons/fa"
+import { FaCalendarAlt, FaClock, FaCalendarPlus, FaCalendarCheck, FaCalendarTimes, FaArrowLeft, FaArrowRight } from "react-icons/fa"
 import "../assets/css/Profile.css"
 
 const Profile = () => {
@@ -15,6 +15,14 @@ const Profile = () => {
     startTime: "",
     endTime: ""
   });
+
+  // États pour la pagination des rendez-vous
+  const [appointmentsPage, setAppointmentsPage] = useState(1);
+  const [appointmentsPerPage, setAppointmentsPerPage] = useState(3);
+
+  // États pour la pagination des disponibilités
+  const [availabilityPage, setAvailabilityPage] = useState(1);
+  const [availabilityPerPage, setAvailabilityPerPage] = useState(3);
 
   const API_BASE_URL = "http://localhost:5000/api";
 
@@ -282,6 +290,137 @@ const Profile = () => {
     return slot.endTime || slot.endDateTime || "Heure inconnue";
   };
 
+  // Fonction pour calculer les rendez-vous paginés
+  const getPaginatedAppointments = () => {
+    const startIndex = (appointmentsPage - 1) * appointmentsPerPage;
+    const endIndex = startIndex + appointmentsPerPage;
+    return appointments.slice(startIndex, endIndex);
+  };
+
+  // Fonction pour calculer les disponibilités paginées
+  const getPaginatedAvailability = () => {
+    const startIndex = (availabilityPage - 1) * availabilityPerPage;
+    const endIndex = startIndex + availabilityPerPage;
+    return availability.slice(startIndex, endIndex);
+  };
+
+  // Fonction pour calculer le nombre total de pages
+  const getTotalPages = (items, perPage) => {
+    return Math.ceil(items.length / perPage);
+  };
+
+  // Fonction pour changer de page (rendez-vous)
+  const handleAppointmentsPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= getTotalPages(appointments, appointmentsPerPage)) {
+      setAppointmentsPage(newPage);
+    }
+  };
+
+  // Fonction pour changer de page (disponibilités)
+  const handleAvailabilityPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= getTotalPages(availability, availabilityPerPage)) {
+      setAvailabilityPage(newPage);
+    }
+  };
+
+  // Fonction pour générer les boutons de pagination
+  const renderPagination = (currentPage, totalPages, handlePageChange, itemsName) => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    
+    // Toujours afficher la première page
+    pages.push(1);
+    
+    // Ajouter des points de suspension si nécessaire avant
+    if (currentPage > 3) {
+      pages.push('...');
+    }
+    
+    // Ajouter les pages autour de la page courante
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+      if (!pages.includes(i)) {
+        pages.push(i);
+      }
+    }
+    
+    // Ajouter des points de suspension si nécessaire après
+    if (currentPage < totalPages - 2) {
+      pages.push('...');
+    }
+    
+    // Toujours afficher la dernière page
+    if (totalPages > 1 && !pages.includes(totalPages)) {
+      pages.push(totalPages);
+    }
+
+    return (
+      <div className="pagination">
+        <div className="pagination-info">
+          Affichage {((currentPage - 1) * (itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage) + 1)}-
+          {Math.min(currentPage * (itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage), itemsName === 'appointments' ? appointments.length : availability.length)} 
+          sur {itemsName === 'appointments' ? appointments.length : availability.length} {itemsName === 'appointments' ? 'rendez-vous' : 'créneaux'}
+        </div>
+        
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <FaArrowLeft /> Précédent
+          </button>
+          
+          <div className="pagination-numbers">
+            {pages.map((page, index) => (
+              page === '...' ? (
+                <span key={`dots-${index}`} className="pagination-dots">...</span>
+              ) : (
+                <button
+                  key={page}
+                  className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+          </div>
+          
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Suivant <FaArrowRight />
+          </button>
+        </div>
+
+        {/* Sélecteur d'éléments par page */}
+        <div className="per-page-selector">
+          <label>Afficher : </label>
+          <select
+            value={itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage}
+            onChange={(e) => {
+              if (itemsName === 'appointments') {
+                setAppointmentsPerPage(Number(e.target.value));
+                setAppointmentsPage(1);
+              } else {
+                setAvailabilityPerPage(Number(e.target.value));
+                setAvailabilityPage(1);
+              }
+            }}
+          >
+            <option value={3}>3</option>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return <div className="profile-page">Chargement...</div>;
   }
@@ -373,62 +512,72 @@ const Profile = () => {
                   )}
                 </div>
               ) : (
-                <div className="appointments-list">
-                  {appointments.map(appointment => (
-                    <div key={appointment._id} className="appointment-card">
-                      <div className="appointment-header">
-                        <div>
-                          <h4>
-                            {user.role === "PATIENT" 
-                              ? `Dr. ${appointment.doctorId?.fullName || "Inconnu"}`
-                              : `Patient: ${appointment.patientId?.fullName || "Inconnu"}`
-                            }
-                          </h4>
-                          <p className="appointment-time">
-                            <FaClock /> {formatDate(appointment.startDateTime)} 
-                            <br />
-                            {formatTime(appointment.startDateTime)} - {formatTime(appointment.endDateTime)}
-                          </p>
+                <>
+                  <div className="appointments-list">
+                    {getPaginatedAppointments().map(appointment => (
+                      <div key={appointment._id} className="appointment-card">
+                        <div className="appointment-header">
+                          <div>
+                            <h4>
+                              {user.role === "PATIENT" 
+                                ? `Dr. ${appointment.doctorId?.fullName || "Inconnu"}`
+                                : `Patient: ${appointment.patientId?.fullName || "Inconnu"}`
+                              }
+                            </h4>
+                            <p className="appointment-time">
+                              <FaClock /> {formatDate(appointment.startDateTime)} 
+                              <br />
+                              {formatTime(appointment.startDateTime)} - {formatTime(appointment.endDateTime)}
+                            </p>
+                          </div>
+                          <span className={`status-badge ${appointment.status.toLowerCase()}`}>
+                            {appointment.status}
+                          </span>
                         </div>
-                        <span className={`status-badge ${appointment.status.toLowerCase()}`}>
-                          {appointment.status}
-                        </span>
-                      </div>
-                      
-                      {appointment.reason && (
-                        <p className="appointment-reason">Raison: {appointment.reason}</p>
-                      )}
-                      
-                      <div className="appointment-actions">
-                        {user.role === "DOCTOR" && appointment.status === "REQUESTED" && (
-                          <>
-                            <button 
-                              className="btn-success"
-                              onClick={() => handleAppointmentAction(appointment._id, "confirm")}
-                            >
-                              <FaCalendarCheck /> Confirmer
-                            </button>
+                        
+                        {appointment.reason && (
+                          <p className="appointment-reason">Raison: {appointment.reason}</p>
+                        )}
+                        
+                        <div className="appointment-actions">
+                          {user.role === "DOCTOR" && appointment.status === "REQUESTED" && (
+                            <>
+                              <button 
+                                className="btn-success"
+                                onClick={() => handleAppointmentAction(appointment._id, "confirm")}
+                              >
+                                <FaCalendarCheck /> Confirmer
+                              </button>
+                              <button 
+                                className="btn-danger"
+                                onClick={() => handleAppointmentAction(appointment._id, "cancel")}
+                              >
+                                <FaCalendarTimes /> Refuser
+                              </button>
+                            </>
+                          )}
+                          
+                          {user.role === "PATIENT" && appointment.status === "REQUESTED" && (
                             <button 
                               className="btn-danger"
                               onClick={() => handleAppointmentAction(appointment._id, "cancel")}
                             >
-                              <FaCalendarTimes /> Refuser
+                              Annuler la demande
                             </button>
-                          </>
-                        )}
-                        
-                        {user.role === "PATIENT" && appointment.status === "REQUESTED" && (
-                          <button 
-                            className="btn-danger"
-                            onClick={() => handleAppointmentAction(appointment._id, "cancel")}
-                          >
-                            Annuler la demande
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination pour les rendez-vous */}
+                  {renderPagination(
+                    appointmentsPage, 
+                    getTotalPages(appointments, appointmentsPerPage), 
+                    handleAppointmentsPageChange,
+                    'appointments'
+                  )}
+                </>
               )}
             </section>
           </>
@@ -496,35 +645,45 @@ const Profile = () => {
                   <p className="text-muted">Ajoutez vos premiers créneaux de disponibilité</p>
                 </div>
               ) : (
-                <div className="availability-list">
-                  {availability.map(slot => {
-                    const slotDate = getSlotDate(slot);
-                    const slotStartTime = getSlotStartTime(slot);
-                    const slotEndTime = getSlotEndTime(slot);
-                    
-                    return (
-                      <div key={slot._id} className="availability-card">
-                        <div className="slot-info">
-                          <FaCalendarAlt />
-                          <div>
-                            <h4>{formatDate(slotDate)}</h4>
-                            <p>
-                              <FaClock /> {formatTime(slotStartTime)} - {formatTime(slotEndTime)}
-                            </p>
-                            <small style={{ color: '#666', fontSize: '0.8rem' }}>
-                            </small>
+                <>
+                  <div className="availability-list">
+                    {getPaginatedAvailability().map(slot => {
+                      const slotDate = getSlotDate(slot);
+                      const slotStartTime = getSlotStartTime(slot);
+                      const slotEndTime = getSlotEndTime(slot);
+                      
+                      return (
+                        <div key={slot._id} className="availability-card">
+                          <div className="slot-info">
+                            <FaCalendarAlt />
+                            <div>
+                              <h4>{formatDate(slotDate)}</h4>
+                              <p>
+                                <FaClock /> {formatTime(slotStartTime)} - {formatTime(slotEndTime)}
+                              </p>
+                              <small style={{ color: '#666', fontSize: '0.8rem' }}>
+                              </small>
+                            </div>
                           </div>
+                          <button 
+                            className="btn-danger btn-sm"
+                            onClick={() => handleDeleteSlot(slot._id)}
+                          >
+                            Supprimer
+                          </button>
                         </div>
-                        <button 
-                          className="btn-danger btn-sm"
-                          onClick={() => handleDeleteSlot(slot._id)}
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination pour les disponibilités */}
+                  {renderPagination(
+                    availabilityPage, 
+                    getTotalPages(availability, availabilityPerPage), 
+                    handleAvailabilityPageChange,
+                    'availability'
+                  )}
+                </>
               )}
             </section>
           </>

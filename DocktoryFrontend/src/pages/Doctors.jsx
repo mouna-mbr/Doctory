@@ -23,7 +23,7 @@ const Doctors = () => {
   
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [doctorsPerPage, setDoctorsPerPage] = useState(6); // Nombre de médecins par page
+  const [doctorsPerPage, setDoctorsPerPage] = useState(2); // Nombre de médecins par page
   
   // États pour l'utilisateur connecté
   const [currentUser, setCurrentUser] = useState(null);
