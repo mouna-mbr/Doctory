@@ -655,14 +655,7 @@ const Doctors = () => {
         </div>
       )}
 
-      {/* Message pour les docteurs connectés */}
-      {currentUser && currentUser.role === "DOCTOR" && (
-        <div className="doctor-note">
-          <p>
-            <strong>Note :</strong> En tant que médecin, vous ne pouvez pas prendre rendez-vous avec d'autres médecins.
-          </p>
-        </div>
-      )}
+  
 
       {/* Liste des médecins */}
       {filteredDoctors.length === 0 ? (
@@ -726,17 +719,12 @@ const Doctors = () => {
                     <button 
                       className="appointment-btn"
                       onClick={() => handleBookAppointment(doctor)}
-                      disabled={!doctor.isAvailable || (currentUser && currentUser.role === "DOCTOR")}
                     >
                       <FaCalendarAlt /> Prendre RDV
                     </button>
                   </div>
 
-                  {currentUser && currentUser.role === "DOCTOR" && (
-                    <div className="doctor-restriction">
-                      <small>Non disponible pour les médecins</small>
-                    </div>
-                  )}
+              
 
                   <div className="contact-info">
                     <p>📞 {doctor.phone}</p>
