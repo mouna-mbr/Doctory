@@ -30,40 +30,142 @@ const Doctors = () => {
 
   const API_BASE_URL = "http://localhost:5000/api";
 
-  useEffect(() => {
-    fetchCurrentUser();
-    fetchDoctors();
-       //   console.log("Current user ID:", currentUser._id || currentUser.id);
+  // Decode JWT token to extract user info
+  const decodeToken = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  };
 
+  useEffect(() => {
+    const loadData = async () => {
+      const user = await fetchCurrentUser();
+      await fetchDoctors(user);
+    };
+    loadData();
   }, []);
 
   // Récupérer l'utilisateur connecté
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        console.log("No token found, skipping user fetch");
+        return null;
+      }
 
+      // First, decode the token to get basic user info
+      const decodedToken = decodeToken(token);
+      console.log("📝 Decoded token:", decodedToken);
+      
+      // Create a minimal user object from token if API fails
+      const tokenUser = decodedToken ? {
+        id: decodedToken.id,
+        _id: decodedToken.id,
+        role: decodedToken.role
+      } : null;
+
+      console.log("Fetching current user from /auth/me...");
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
       });
 
+      console.log("Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("User data received:", data);
         if (data.success) {
           setCurrentUser(data.data);
+          console.log("✅ Current user set from API:", data.data);
+          return data.data;
+        }
+      } else if (response.status === 404) {
+        console.warn("⚠️ /auth/me endpoint not found (404). Trying alternative endpoint...");
+        // Try alternative endpoint /auth/profile
+        try {
+          console.log("Trying alternative endpoint /auth/profile...");
+          const altResponse = await fetch(`${API_BASE_URL}/auth/profile`, {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+          });
+          
+          if (altResponse.ok) {
+            const data = await altResponse.json();
+            if (data.success) {
+              setCurrentUser(data.data);
+              console.log("✅ Current user set from /auth/profile:", data.data);
+              return data.data;
+            }
+          } else {
+            console.log("Alternative endpoint also failed. Status:", altResponse.status);
+          }
+        } catch (altErr) {
+          console.log("Alternative endpoint error:", altErr.message);
+        }
+        
+        // If both API endpoints fail, use the decoded token data
+        if (tokenUser) {
+          console.warn("⚠️ API endpoints failed. Using decoded token data:", tokenUser);
+          setCurrentUser(tokenUser);
+          return tokenUser;
+        }
+      } else if (response.status === 401) {
+        console.warn("⚠️ Unauthorized (401). Token may be invalid or expired.");
+        // Clear invalid token
+        localStorage.removeItem("token");
+      } else if (response.status === 403) {
+        console.warn("⚠️ Forbidden (403). Access denied.");
+      } else {
+        console.warn(`⚠️ Unexpected status: ${response.status}`);
+        // Use token data as fallback
+        if (tokenUser) {
+          console.warn("Using decoded token data as fallback:", tokenUser);
+          setCurrentUser(tokenUser);
+          return tokenUser;
         }
       }
     } catch (err) {
       console.error("❌ Error fetching current user:", err);
+      // Try to use decoded token as last resort
+      const token = localStorage.getItem("token");
+      if (token) {
+        const decodedToken = decodeToken(token);
+        if (decodedToken) {
+          const tokenUser = {
+            id: decodedToken.id,
+            _id: decodedToken.id,
+            role: decodedToken.role
+          };
+          console.warn("Using decoded token data after error:", tokenUser);
+          setCurrentUser(tokenUser);
+          return tokenUser;
+        }
+      }
     }
+    return null;
   };
 
-  const fetchDoctors = async () => {
+  const fetchDoctors = async (user = null) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Use the passed user or fall back to state
+      const activeUser = user || currentUser;
       
       console.log("🔍 Fetching doctors from API...");
       
@@ -159,11 +261,11 @@ const Doctors = () => {
       
       // Traitement des données récupérées
       if (doctorsData && doctorsData.length > 0) {
-        processDoctorsData(doctorsData, source);
+        processDoctorsData(doctorsData, source, activeUser);
       } else {
         console.log("No data from API, using mock data");
         const mockDoctors = getMockDoctors();
-        processDoctorsData(mockDoctors, "mock");
+        processDoctorsData(mockDoctors, "mock", activeUser);
         setError("Utilisation de données de démonstration. Les vraies données nécessitent une connexion à l'API.");
       }
       
@@ -172,7 +274,7 @@ const Doctors = () => {
       setError(err.message);
       
       const mockDoctors = getMockDoctors();
-      processDoctorsData(mockDoctors, "mock_fallback");
+      processDoctorsData(mockDoctors, "mock_fallback", activeUser);
     } finally {
       setLoading(false);
     }
@@ -200,10 +302,58 @@ const Doctors = () => {
   };
 
   // Traiter les données des médecins
-  const processDoctorsData = (doctorsList, source) => {
+  const processDoctorsData = (doctorsList, source, user = null) => {
     console.log(`Processing doctors from ${source}:`, doctorsList);
     
-    const formattedDoctors = doctorsList.map(formatDoctorData);
+    let formattedDoctors = doctorsList.map(formatDoctorData);
+    
+    // Use the passed user or fall back to state
+    const activeUser = user || currentUser;
+    
+    // Filtrer le docteur connecté de la liste s'il est un docteur
+    if (activeUser && activeUser.role === "DOCTOR") {
+      const currentUserId = activeUser._id || activeUser.id;
+      const currentUserEmail = activeUser.email;
+      const currentUserFullName = activeUser.fullName;
+      
+      console.log(`🔍 Current logged-in user details:`, {
+        id: currentUserId,
+        email: currentUserEmail,
+        fullName: currentUserFullName,
+        role: activeUser.role
+      });
+      
+      const beforeFilter = formattedDoctors.length;
+      
+      // Filter by multiple criteria to ensure we catch the logged-in doctor
+      formattedDoctors = formattedDoctors.filter(doctor => {
+        const doctorId = doctor.userId;
+        const doctorRawId = doctor.rawData._id || doctor.rawData.id;
+        const doctorEmail = doctor.email;
+        
+        // Check if this doctor matches the logged-in user by ID or email
+        const matchesById = (doctorId === currentUserId || doctorRawId === currentUserId);
+        const matchesByEmail = (doctorEmail === currentUserEmail);
+        
+        if (matchesById || matchesByEmail) {
+          console.log(`🚫 Filtering out doctor:`, {
+            name: doctor.name,
+            id: doctorId,
+            rawId: doctorRawId,
+            email: doctorEmail,
+            matchesById,
+            matchesByEmail
+          });
+          return false; // Exclude this doctor
+        }
+        
+        return true; // Keep this doctor
+      });
+      
+      console.log(`🔒 Filtered out logged-in doctor from list (${beforeFilter} -> ${formattedDoctors.length} doctors)`);
+    } else {
+      console.log(`ℹ️ No filtering needed. User:`, activeUser ? `${activeUser.role} - ${activeUser.email}` : 'null');
+    }
     
     setDoctors(formattedDoctors);
     setFilteredDoctors(formattedDoctors);
