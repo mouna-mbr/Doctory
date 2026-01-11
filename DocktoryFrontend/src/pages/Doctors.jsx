@@ -325,11 +325,6 @@ const Doctors = () => {
       return;
     }
 
-    if (currentUser && currentUser.role === "DOCTOR") {
-      alert("Les docteurs ne peuvent pas prendre rendez-vous avec d'autres docteurs.");
-      return;
-    }
-    
     const encodedName = encodeURIComponent(doctor.name);
     const encodedSpecialty = encodeURIComponent(doctor.specialty);
     
