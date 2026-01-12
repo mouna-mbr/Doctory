@@ -280,12 +280,8 @@ const MyAppointments = () => {
   };
 
   // Fonction pour consulter le profil
-  const viewProfile = (userId, userName, role) => {
-    if (role === "DOCTOR" || role === "doctor") {
-      window.location.href = `/doctor/${userId}?name=${encodeURIComponent(userName)}`;
-    } else {
-      window.location.href = `/patient/${userId}`;
-    }
+  const viewProfile = (userId) => {
+      window.location.href = `/profile/${userId}`;
   };
 
   // Annuler un rendez-vous
@@ -713,10 +709,10 @@ const MyAppointments = () => {
                               <div className="patient-details">
                                 <span><strong>Patient :</strong> {patientName}</span>
                                 <button 
-                                  className="view-profile-btn"
-                                  onClick={() => viewProfile(patientInfo._id, patientName, "patient")}
+                                  className="view-profile-btn"  
+                                  onClick={() => viewProfile(patientInfo._id)}
                                 >
-                                  <FaExternalLinkAlt /> Voir profil
+                                  <FaExternalLinkAlt /> Voir profil 
                                 </button>
                               </div>
                             </div>
