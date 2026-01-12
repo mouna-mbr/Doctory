@@ -36,6 +36,7 @@ const userRoutes = require("./routes/userRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const availabilityRoutes = require("./routes/availabilityRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 // Montage des routes avec logging
 console.log("Mounting routes...");
@@ -44,6 +45,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reviews", reviewRoutes);
+
 console.log("Routes mounted successfully");
 
 // Route de debug pour voir toutes les routes montées

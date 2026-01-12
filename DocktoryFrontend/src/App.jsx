@@ -16,6 +16,7 @@ import AppointmentPage from "./pages/AppointmentPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import MyAppointments from "./pages/MyAppointments";
+import VisitProfile from "./pages/VisitProfile"; // <-- Ajouter cette ligne
 
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -34,7 +35,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Auth */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
@@ -125,7 +125,6 @@ function App() {
           }
         />
 
-
         <Route
           path="/my-appointments"
           element={
@@ -134,6 +133,17 @@ function App() {
             </MainLayout>
           }
         />
+
+        {/* Page de visite de profil */}
+        <Route
+          path="/profile/:userId"
+          element={
+            <MainLayout>
+              <VisitProfile />
+            </MainLayout>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

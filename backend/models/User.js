@@ -82,6 +82,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+    rating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  
+  reviewsCount: {
+    type: Number,
+    default: 0
+  },
 });
 
 // Index for faster email lookups
