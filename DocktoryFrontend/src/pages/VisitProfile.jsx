@@ -183,24 +183,23 @@ const fetchDoctorAvailability = async () => {
 
     try {
       const token = localStorage.getItem("token");
-      let endpoint = "";
       
+      // Déterminer le type de review selon le rôle de l'utilisateur
+      let reviewType = "USER";
       if (user.role === "DOCTOR") {
-        endpoint = `${API_BASE_URL}/reviews/doctor`;
+        reviewType = "DOCTOR";
       } else if (user.role === "PHARMACIST") {
-        endpoint = `${API_BASE_URL}/reviews/pharmacist`;
-      } else {
-        endpoint = `${API_BASE_URL}/reviews/user`;
+        reviewType = "PHARMACIST";
       }
 
       const reviewData = {
-        [user.role === "DOCTOR" ? "doctorId" : 
-         user.role === "PHARMACIST" ? "pharmacistId" : "userId"]: userId,
+        targetId: userId,
+        reviewType: reviewType,
         rating: newReview.rating,
         comment: newReview.comment
       };
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_BASE_URL}/reviews`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
