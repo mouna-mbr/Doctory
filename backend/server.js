@@ -49,6 +49,7 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/contact", require("./routes/contact"));
 
 console.log("Routes mounted successfully");
 

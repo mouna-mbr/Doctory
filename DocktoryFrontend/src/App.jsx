@@ -4,6 +4,7 @@ import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPassword";
 import VerifyEmail from "./auth/VerifyEmail";
+import Contact from "./pages/Contact";
 
 import Accueil from "./pages/Accueil";
 import Profile from "./pages/Profile";
@@ -16,9 +17,10 @@ import AppointmentPage from "./pages/AppointmentPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import MyAppointments from "./pages/MyAppointments";
-import VisitProfile from "./pages/VisitProfile"; // <-- Ajouter cette ligne
-import Chatbot from "./pages/Chatbot"; // <-- Ajouter le chatbot
-import NotFound from "./pages/NotFound"; // <-- Ajouter une page 404
+import VisitProfile from "./pages/VisitProfile"; 
+import Chatbot from "./pages/Chatbot";  
+import NotFound from "./pages/NotFound"; 
+import Services from "./pages/Services";
 
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -83,6 +85,26 @@ function App() {
             <MainLayout>
               <VisitProfile />
             </MainLayout>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <>
+              <Navbar />
+              <Contact />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <>
+              <Navbar />
+              <Services />
+              <Footer />
+            </>
           }
         />
 
