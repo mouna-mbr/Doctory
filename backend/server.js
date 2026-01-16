@@ -37,6 +37,8 @@ const appointmentRoutes = require("./routes/appointmentRoutes");
 const availabilityRoutes = require("./routes/availabilityRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const aiRoutes = require("./routes/aiRoutes");
+
 
 // Montage des routes avec logging
 console.log("Mounting routes...");
@@ -46,6 +48,8 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/contact", require("./routes/contact"));
 
 console.log("Routes mounted successfully");
 

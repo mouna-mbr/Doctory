@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import { useState } from "react";
 import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPassword";
 import VerifyEmail from "./auth/VerifyEmail";
+import Contact from "./pages/Contact";
 
 import Accueil from "./pages/Accueil";
 import Profile from "./pages/Profile";
@@ -16,13 +17,17 @@ import AppointmentPage from "./pages/AppointmentPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import MyAppointments from "./pages/MyAppointments";
-import VisitProfile from "./pages/VisitProfile"; // <-- Ajouter cette ligne
+import VisitProfile from "./pages/VisitProfile"; 
+import Chatbot from "./pages/Chatbot";  
+import NotFound from "./pages/NotFound"; 
+import Services from "./pages/Services";
 
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserList from "./pages/admin/UserList";
 
-/* Layout avec Navbar + Footer */
+
+/* Layout avec Navbar + Footer (sans Chatbot ici) */
 const MainLayout = ({ children }) => (
   <>
     <Navbar />
@@ -32,10 +37,15 @@ const MainLayout = ({ children }) => (
 );
 
 function App() {
+  const [showChatbot] = useState(true); // État pour contrôler le chatbot
+
   return (
     <BrowserRouter>
+      {/* Le Chatbot est en dehors des Routes, donc présent sur toutes les pages */}
+      {showChatbot && <Chatbot />}
+      
       <Routes>
-        {/* Auth */}
+        {/* Pages d'authentification */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<SignUp />} />
@@ -48,7 +58,7 @@ function App() {
           <Route path="users" element={<UserList />} />
         </Route>
 
-        {/* Pages publiques */}
+        {/* Toutes les autres pages avec MainLayout */}
         <Route
           path="/"
           element={
@@ -67,74 +77,8 @@ function App() {
           }
         />
 
-        <Route
-          path="/settings"
-          element={
-            <MainLayout>
-              <SettingsProfile />
-            </MainLayout>
-          }
-        />
+        {/* ... toutes vos autres routes ... */}
 
-        <Route
-          path="/dossier"
-          element={
-            <MainLayout>
-              <Dossier />
-            </MainLayout>
-          }
-        />
-
-        {/* Médecins */}
-        <Route
-          path="/doctors"
-          element={
-            <MainLayout>
-              <Doctors />
-            </MainLayout>
-          }
-        />
-
-        {/* Rendez-vous - Utilisez AppointmentPage qui récupère les données */}
-        <Route
-          path="/appointment/:doctorId"
-          element={
-            <MainLayout>
-              <AppointmentPage />
-            </MainLayout>
-          }
-        />
-
-        {/* Gardez l'ancienne route pour compatibilité */}
-        <Route
-          path="/appointment-booking"
-          element={
-            <MainLayout>
-              <AppointmentBooking />
-            </MainLayout>
-          }
-        />
-
-        {/* Rendez-vous du docteur */}
-        <Route
-          path="/doctor/appointments"
-          element={
-            <MainLayout>
-              <DoctorAppointments />
-            </MainLayout>
-          }
-        />
-
-        <Route
-          path="/my-appointments"
-          element={
-            <MainLayout>
-              <MyAppointments />
-            </MainLayout>
-          }
-        />
-
-        {/* Page de visite de profil */}
         <Route
           path="/profile/:userId"
           element={
@@ -143,7 +87,36 @@ function App() {
             </MainLayout>
           }
         />
+        <Route
+          path="/contact"
+          element={
+            <>
+              <Navbar />
+              <Contact />
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <>
+              <Navbar />
+              <Services />
+              <Footer />
+            </>
+          }
+        />
 
+        {/* Page 404 */}
+        <Route
+          path="*"
+          element={
+            <MainLayout>
+              <NotFound />
+            </MainLayout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
