@@ -4,8 +4,6 @@ const crypto = require("crypto");
 const UserRepository = require("../repositories/UserRepository");
 const PasswordReset = require("../models/PasswordReset");
 const EmailVerification = require("../models/EmailVerification");
-const User = require("../models/User");
-
 const { sendPasswordResetEmail, sendVerificationEmail } = require("../config/email");
 
 class AuthService {
@@ -95,16 +93,6 @@ class AuthService {
       throw new Error("Please verify your email before logging in");
     }
 
-      // Check if license is verified for doctors and pharmacists
-      if ((user.role === "DOCTOR" || user.role === "PHARMACIST")) {
-        if (!user.isLicenseVerified) {
-          if (user.licenseRejectionReason) {
-            throw new Error(`Your license was rejected. Reason: ${user.licenseRejectionReason}. Please contact support.`);
-          }
-          throw new Error("Your professional license is pending verification by admin. Please wait for approval.");
-        }
-      }
-
     const isPasswordValid = await bcrypt.compare(
       password,
       user.passwordHash
@@ -124,23 +112,67 @@ class AuthService {
 
       await send2FACodeEmail(user.email, code);
 
-      // Return user without password hash
       return {
-        user: {
-          id: user._id,
-          role: user.role,
-          fullName: user.fullName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          isActive: user.isActive,
-          isEmailVerified: user.isEmailVerified,
-          createdAt: user.createdAt,
-          lastLoginAt: new Date(),
-        },
-        token,
+        twoFactorRequired: true,
+        userId: user._id,
+        message: "2FA code sent to email",
       };
-    } catch (error) {
-      throw error;
+    }
+
+    const token = this.generateToken(user._id, user.role);
+
+    return {
+      user: {
+        id: user._id,
+        role: user.role,
+        fullName: user.fullName,
+        email: user.email,
+      },
+      token,
+    };
+  }
+
+  /* ==========================
+     VERIFY 2FA
+  ========================== */
+  async verify2FA(userId, code) {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    if (
+      user.twoFactorCode !== code ||
+      user.twoFactorCodeExpiresAt < new Date()
+    ) {
+      throw new Error("Invalid or expired 2FA code");
+    }
+
+    await UserRepository.update(userId, {
+      twoFactorCode: null,
+      twoFactorCodeExpiresAt: null,
+    });
+
+    const token = this.generateToken(user._id, user.role);
+
+    return {
+      token,
+      user: {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        fullName: user.fullName,
+      },
+    };
+  }
+
+  /* ==========================
+     TOGGLE 2FA
+  ========================== */
+
+  async toggle2FA(userId, enabled) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("Utilisateur introuvable");
     }
 
     user.twoFactorEnabled = enabled;
