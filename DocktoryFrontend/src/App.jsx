@@ -21,7 +21,8 @@ import VisitProfile from "./pages/VisitProfile";
 import Chatbot from "./pages/Chatbot";  
 import NotFound from "./pages/NotFound"; 
 import Services from "./pages/Services";
-
+import TwoFactor from "./pages/TwoFactor";
+import SecuritySettings from "./pages/SecuritySettings";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserList from "./pages/admin/UserList";
@@ -67,6 +68,8 @@ function App() {
             </MainLayout>
           }
         />
+
+        <Route path="/2fa" element={<TwoFactor />} />
 
         <Route
           path="/profile"
@@ -168,6 +171,17 @@ function App() {
             </>
           }
         />
+        <Route
+          path="/security"
+          element={
+            <>
+              <Navbar />
+              <SecuritySettings />
+              <Footer />
+            </>
+          }
+        />
+
 
         {/* Page 404 */}
         <Route

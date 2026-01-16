@@ -80,67 +80,111 @@ class AuthService {
     }
   }
 
-  // Login user
+  /* ==========================
+     LOGIN (WITH 2FA)
+  ========================== */
   async login(email, password) {
-    try {
-      // Find user by email (with password)
-      const user = await UserRepository.findByEmail(email);
-      if (!user) {
-        throw new Error("Invalid email or password");
-      }
+    const user = await UserRepository.findByEmail(email);
+    if (!user) throw new Error("Invalid email or password");
 
-      // Check if user is active
-      if (!user.isActive) {
-        throw new Error("Account is deactivated");
-      }
+    if (!user.isActive) throw new Error("Account is deactivated");
 
-      // Check if email is verified
-      if (!user.isEmailVerified) {
-        throw new Error("Please verify your email before logging in. Check your inbox for the verification link.");
-      }
-
-      // Check if license is verified for doctors and pharmacists
-      if ((user.role === "DOCTOR" || user.role === "PHARMACIST")) {
-        if (!user.isLicenseVerified) {
-          if (user.licenseRejectionReason) {
-            throw new Error(`Your license was rejected. Reason: ${user.licenseRejectionReason}. Please contact support.`);
-          }
-          throw new Error("Your professional license is pending verification by admin. Please wait for approval.");
-        }
-      }
-
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-      if (!isPasswordValid) {
-        throw new Error("Invalid email or password");
-      }
-
-      // Update last login
-      await UserRepository.updateLastLogin(user._id);
-
-      // Generate token
-      const token = this.generateToken(user._id, user.role);
-
-      // Return user without password hash
-      return {
-        user: {
-          id: user._id,
-          role: user.role,
-          fullName: user.fullName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          isActive: user.isActive,
-          isEmailVerified: user.isEmailVerified,
-          isLicenseVerified: user.isLicenseVerified,
-          createdAt: user.createdAt,
-          lastLoginAt: new Date(),
-        },
-        token,
-      };
-    } catch (error) {
-      throw error;
+    if (!user.isEmailVerified) {
+      throw new Error("Please verify your email before logging in");
     }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.passwordHash
+    );
+    if (!isPasswordValid) throw new Error("Invalid email or password");
+
+    await UserRepository.updateLastLogin(user._id);
+
+    /* ===== 2FA CHECK ===== */
+    if (user.twoFactorEnabled) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await UserRepository.update(user._id, {
+        twoFactorCode: code,
+        twoFactorCodeExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
+
+      await send2FACodeEmail(user.email, code);
+
+      return {
+        twoFactorRequired: true,
+        userId: user._id,
+        message: "2FA code sent to email",
+      };
+    }
+
+    const token = this.generateToken(user._id, user.role);
+
+    return {
+      user: {
+        id: user._id,
+        role: user.role,
+        fullName: user.fullName,
+        email: user.email,
+      },
+      token,
+    };
   }
+
+  /* ==========================
+     VERIFY 2FA
+  ========================== */
+  async verify2FA(userId, code) {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    if (
+      user.twoFactorCode !== code ||
+      user.twoFactorCodeExpiresAt < new Date()
+    ) {
+      throw new Error("Invalid or expired 2FA code");
+    }
+
+    await UserRepository.update(userId, {
+      twoFactorCode: null,
+      twoFactorCodeExpiresAt: null,
+    });
+
+    const token = this.generateToken(user._id, user.role);
+
+    return {
+      token,
+      user: {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        fullName: user.fullName,
+      },
+    };
+  }
+
+  /* ==========================
+     TOGGLE 2FA
+  ========================== */
+
+  async toggle2FA(userId, enabled) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("Utilisateur introuvable");
+    }
+
+    user.twoFactorEnabled = enabled;
+    await user.save();
+
+    return {
+      message: enabled
+        ? "2FA activé avec succès"
+        : "2FA désactivé avec succès",
+    };
+  }
+
 
   // Verify token
   verifyToken(token) {
