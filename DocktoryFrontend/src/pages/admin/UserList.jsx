@@ -39,6 +39,11 @@ const UserList = () => {
       const data = await response.json();
 
       if (data.success) {
+        console.log("Users data:", data.data); // Debug log
+        // Log each user's role specifically
+        data.data.forEach((user, index) => {
+          console.log(`User ${index}: ${user.fullName} - Role: ${user.role} - Email: ${user.email}`);
+        });
         setUsers(data.data);
         setFilteredUsers(data.data);
       } else {
@@ -388,92 +393,101 @@ const UserList = () => {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
-                <tr key={user._id}>
-                  <td className="user-name">{user.fullName}</td>
-                  <td>{user.email}</td>
-                  <td>{user.phoneNumber}</td>
-                  <td>
-                    <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
-                      {getRoleLabel(user.role)}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${user.isActive ? "status-active" : "status-inactive"}`}>
-                      {user.isActive ? (
-                        <>
-                          <FaCheckCircle /> Actif
-                        </>
+              filteredUsers.map((user) => {
+                console.log(`Rendering row for: ${user.fullName}, role: ${user.role}`);
+                return (
+                  <tr key={user._id}>
+                    <td className="user-name">{user.fullName || 'N/A'}</td>
+                    <td>{user.email || 'N/A'}</td>
+                    <td>{user.phoneNumber || 'N/A'}</td>
+                    <td className="role-cell">
+                      {user.role ? (
+                        <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
+                          {getRoleLabel(user.role)}
+                        </span>
                       ) : (
-                        <>
-                          <FaTimesCircle /> Inactif
-                        </>
+                        <span>—</span>
                       )}
-                    </span>
-                  </td>
-                  <td>{new Date(user.createdAt).toLocaleDateString('fr-FR')}</td>
-                  <td>
-                    {(user.role === "DOCTOR" || user.role === "PHARMACIST") ? (
-                      user.licenseDocument ? (
-                        <div className="license-status">
-                          {user.isLicenseVerified ? (
-                            <span className="license-verified">
-                              <FaCheckCircle /> Vérifiée
-                            </span>
-                          ) : user.licenseRejectionReason ? (
-                            <span className="license-rejected">
-                              <FaTimesCircle /> Rejetée
-                            </span>
-                          ) : (
-                            <button 
-                              className="btn-view-license"
-                              onClick={() => handleViewLicense(user)}
-                            >
-                              <FaEye /> En attente
-                            </button>
-                          )}
-                        </div>
+                    </td>
+                    <td className="status-cell">
+                      <span className={`status-badge ${user.isActive ? "status-active" : "status-inactive"}`}>
+                        {user.isActive ? (
+                          <>
+                            <FaCheckCircle /> Actif
+                          </>
+                        ) : (
+                          <>
+                            <FaTimesCircle /> Inactif
+                          </>
+                        )}
+                      </span>
+                    </td>
+                    <td className="license-cell">
+                      {(user.role === "DOCTOR" || user.role === "PHARMACIST") ? (
+                        user.licenseDocument ? (
+                          <span className="license-status">
+                            {user.isLicenseVerified ? (
+                              <span className="license-verified">
+                                <FaCheckCircle /> Vérifiée
+                              </span>
+                            ) : user.licenseRejectionReason ? (
+                              <span className="license-rejected">
+                                <FaTimesCircle /> Rejetée
+                              </span>
+                            ) : (
+                              <button 
+                                className="btn-view-license"
+                                onClick={() => handleViewLicense(user)}
+                              >
+                                <FaEye /> En attente
+                              </button>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="no-license">Aucune</span>
+                        )
                       ) : (
-                        <span className="no-license">Aucune</span>
-                      )
-                    ) : (
-                      <span className="not-applicable">N/A</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className="btn-view" 
-                        title="Voir détails"
-                        onClick={() => handleViewUser(user)}
-                      >
-                        <FaEye />
-                      </button>
-                      <button 
-                        className="btn-edit" 
-                        title="Modifier"
-                        onClick={() => handleEditUser(user)}
-                      >
-                        <FaEdit />
-                      </button>
-                      <button 
-                        className={`btn-toggle ${user.isActive ? "btn-deactivate" : "btn-activate"}`}
-                        onClick={() => handleToggleStatus(user._id, user.isActive)}
-                        title={user.isActive ? "Désactiver" : "Activer"}
-                      >
-                        {user.isActive ? <FaTimesCircle /> : <FaCheckCircle />}
-                      </button>
-                      <button 
-                        className="btn-delete" 
-                        onClick={() => handleDeleteUser(user._id)}
-                        title="Supprimer"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        <span className="not-applicable">N/A</span>
+                      )}
+                    </td>
+                    <td className="date-cell">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'N/A'}
+                    </td>
+                    <td className="actions-cell">
+                      <div className="action-buttons">
+                        <button 
+                          className="btn-view" 
+                          title="Voir détails"
+                          onClick={() => handleViewUser(user)}
+                        >
+                          <FaEye />
+                        </button>
+                        <button 
+                          className="btn-edit" 
+                          title="Modifier"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button 
+                          className={`btn-toggle ${user.isActive ? "btn-deactivate" : "btn-activate"}`}
+                          onClick={() => handleToggleStatus(user._id, user.isActive)}
+                          title={user.isActive ? "Désactiver" : "Activer"}
+                        >
+                          {user.isActive ? <FaTimesCircle /> : <FaCheckCircle />}
+                        </button>
+                        <button 
+                          className="btn-delete" 
+                          onClick={() => handleDeleteUser(user._id)}
+                          title="Supprimer"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

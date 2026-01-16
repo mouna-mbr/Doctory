@@ -201,6 +201,17 @@ class UserController {
   async deactivateUser(req, res) {
     try {
       const { id } = req.params;
+      const requestingUserId = req.user.userId;
+      const requestingUserRole = req.user.role;
+
+      // Check permissions: Admin can deactivate anyone, users can only deactivate themselves
+      if (requestingUserRole !== "ADMIN" && requestingUserId.toString() !== id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Vous n'avez pas la permission de désactiver ce compte",
+        });
+      }
+
       const result = await UserService.deactivateUser(id);
 
       res.status(200).json({
@@ -220,6 +231,17 @@ class UserController {
   async activateUser(req, res) {
     try {
       const { id } = req.params;
+      const requestingUserId = req.user.userId;
+      const requestingUserRole = req.user.role;
+
+      // Check permissions: Admin can activate anyone, users can only activate themselves
+      if (requestingUserRole !== "ADMIN" && requestingUserId.toString() !== id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Vous n'avez pas la permission de réactiver ce compte",
+        });
+      }
+
       const result = await UserService.activateUser(id);
 
       res.status(200).json({

@@ -77,13 +77,74 @@ function App() {
           }
         />
 
-        {/* ... toutes vos autres routes ... */}
-
         <Route
           path="/profile/:userId"
           element={
             <MainLayout>
               <VisitProfile />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/doctors"
+          element={
+            <MainLayout>
+              <Doctors />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/my-appointments"
+          element={
+            <MainLayout>
+              <MyAppointments />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/appointment/:doctorId"
+          element={
+            <MainLayout>
+              <AppointmentBooking />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/doctor-appointments"
+          element={
+            <MainLayout>
+              <DoctorAppointments />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/appointments"
+          element={
+            <MainLayout>
+              <AppointmentPage />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/dossier"
+          element={
+            <MainLayout>
+              <Dossier />
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <MainLayout>
+              <SettingsProfile />
             </MainLayout>
           }
         />

@@ -34,17 +34,15 @@ router.get("/:id", UserController.getUserById.bind(UserController));
 // Update user (Admin or own profile)
 router.put("/:id", UserController.updateUser.bind(UserController));
 
-// Activate user (Admin only)
+// Activate user (Admin or own account)
 router.patch(
   "/:id/activate",
-  roleMiddleware("ADMIN"),
   UserController.activateUser.bind(UserController)
 );
 
-// Deactivate user (Admin only)
+// Deactivate user (Admin or own account)
 router.patch(
   "/:id/deactivate",
-  roleMiddleware("ADMIN"),
   UserController.deactivateUser.bind(UserController)
 );
 

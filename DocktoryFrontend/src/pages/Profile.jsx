@@ -36,6 +36,10 @@ const Profile = () => {
   const [availabilityPage, setAvailabilityPage] = useState(1);
   const [availabilityPerPage, setAvailabilityPerPage] = useState(3);
 
+  // États pour la gestion du compte
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
+
   const API_BASE_URL = "http://localhost:5000/api";
 
   useEffect(() => {
@@ -675,6 +679,75 @@ const Profile = () => {
     );
   };
 
+  // Fonction pour désactiver le compte
+  const handleDeactivateAccount = async () => {
+    try {
+      setDeactivating(true);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/users/${user._id || user.id}/deactivate`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert("Votre compte a été désactivé avec succès. Vous n'apparaîtrez plus dans la liste des médecins.");
+        setShowDeactivateModal(false);
+        
+        // Mettre à jour l'état local
+        setUser(prev => ({
+          ...prev,
+          isActive: false
+        }));
+      } else {
+        alert("Erreur: " + (data.message || "Impossible de désactiver le compte"));
+      }
+    } catch (err) {
+      console.error("Error deactivating account:", err);
+      alert("Erreur lors de la désactivation du compte");
+    } finally {
+      setDeactivating(false);
+    }
+  };
+
+  // Fonction pour réactiver le compte
+  const handleReactivateAccount = async () => {
+    try {
+      setDeactivating(true);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/users/${user._id || user.id}/activate`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert("Votre compte a été réactivé avec succès. Vous apparaîtrez à nouveau dans la liste des médecins.");
+        
+        // Mettre à jour l'état local
+        setUser(prev => ({
+          ...prev,
+          isActive: true
+        }));
+      } else {
+        alert("Erreur: " + (data.message || "Impossible de réactiver le compte"));
+      }
+    } catch (err) {
+      console.error("Error reactivating account:", err);
+      alert("Erreur lors de la réactivation du compte");
+    } finally {
+      setDeactivating(false);
+    }
+  };
+
   // Fonction pour charger les avis quand on clique sur l'onglet "Mes Avis"
   const handleReviewsTabClick = () => {
     setActiveTab("reviews");
@@ -746,6 +819,28 @@ const Profile = () => {
         {activeTab === "info" && (
           <section className="card">
             <h2>Informations générales</h2>
+            
+            {/* Statut du compte */}
+            {(user.role === "DOCTOR" || user.role === "PHARMACIST") && (
+              <div className={`account-status-banner ${user.isActive ? 'active' : 'inactive'}`}>
+                <div className="status-info">
+                  <strong>Statut du compte:</strong> 
+                  <span className={`status-label ${user.isActive ? 'active' : 'inactive'}`}>
+                    {user.isActive ? "✅ Actif - Visible dans la liste" : "❌ Désactivé - Non visible dans la liste"}
+                  </span>
+                </div>
+                {user.isActive ? (
+                  <p className="status-description">
+                    Votre profil est actuellement visible par les patients dans la liste des médecins.
+                  </p>
+                ) : (
+                  <p className="status-description">
+                    Votre profil est actuellement masqué. Les patients ne peuvent pas vous voir dans la liste des médecins.
+                  </p>
+                )}
+              </div>
+            )}
+            
             <div className="info-grid">
               <p><strong>Email :</strong> {user.email}</p>
               <p><strong>Téléphone :</strong> {user.phoneNumber}</p>
@@ -762,6 +857,37 @@ const Profile = () => {
                 <p><strong>Pharmacie :</strong> {user.pharmacyName || "Non spécifiée"}</p>
               )}
             </div>
+            
+            {/* Gestion du compte pour Doctor/Pharmacist */}
+            {(user.role === "DOCTOR" || user.role === "PHARMACIST") && (
+              <div className="account-management">
+                <h3>Gestion du compte</h3>
+                <div className="account-actions">
+                  {user.isActive ? (
+                    <button 
+                      className="btn-danger"
+                      onClick={() => setShowDeactivateModal(true)}
+                    >
+                      🔒 Désactiver mon compte
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn-success"
+                      onClick={handleReactivateAccount}
+                      disabled={deactivating}
+                    >
+                      {deactivating ? "Réactivation..." : "✅ Réactiver mon compte"}
+                    </button>
+                  )}
+                  <p className="account-action-info">
+                    {user.isActive 
+                      ? "En désactivant votre compte, vous ne serez plus visible dans la liste des médecins et ne pourrez plus recevoir de nouvelles demandes de rendez-vous."
+                      : "En réactivant votre compte, vous serez à nouveau visible dans la liste des médecins et pourrez recevoir des demandes de rendez-vous."
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -1158,6 +1284,39 @@ const Profile = () => {
           </section>
         )}
       </main>
+      
+      {/* Deactivate Account Modal */}
+      {showDeactivateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>⚠️ Désactiver votre compte</h3>
+            <p className="warning-text">
+              Êtes-vous sûr de vouloir désactiver votre compte ?
+            </p>
+            <ul className="warning-list">
+              <li>Vous ne serez plus visible dans la liste des médecins</li>
+              <li>Les patients ne pourront plus prendre de rendez-vous avec vous</li>
+              <li>Vous pourrez réactiver votre compte à tout moment</li>
+            </ul>
+            <div className="modal-actions">
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowDeactivateModal(false)}
+                disabled={deactivating}
+              >
+                Annuler
+              </button>
+              <button 
+                className="btn-danger"
+                onClick={handleDeactivateAccount}
+                disabled={deactivating}
+              >
+                {deactivating ? "Désactivation..." : "Confirmer la désactivation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
