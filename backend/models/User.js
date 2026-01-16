@@ -88,6 +88,21 @@ const userSchema = new mongoose.Schema({
     min: 0,
     max: 5
   },
+  twoFactorEnabled: {
+  type: Boolean,
+  default: false,
+},
+
+twoFactorCode: {
+  type: String,
+  default: null,
+},
+
+twoFactorCodeExpiresAt: {
+  type: Date,
+  default: null,
+},
+
   
   reviewsCount: {
     type: Number,

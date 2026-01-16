@@ -374,7 +374,14 @@ export default function Navbar() {
                             <span className="dropdown-item-desc">Voir vos consultations</span>
                           </div>
                         </a>
-                        
+                        <a href="/security" className="dropdown-item">
+                            <FaCog />
+                            <div className="dropdown-item-content">
+                            <span className="dropdown-item-title">Sécurité & 2FA</span>
+                            <span className="dropdown-item-desc">Gérer la sécurité de votre compte</span>
+                          </div>
+                          </a>
+
                         <a href="/favorites" className="dropdown-item" onClick={closeMenu}>
                           <MdFavorite />
                           <div className="dropdown-item-content">

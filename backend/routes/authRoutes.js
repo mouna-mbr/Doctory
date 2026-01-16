@@ -35,5 +35,11 @@ router.get(
   authMiddleware,
   AuthController.getProfile.bind(AuthController) // Utilise la même méthode
 );
+router.post("/verify-2fa", AuthController.verify2FA.bind(AuthController));
+router.post(
+  "/toggle-2fa",
+  authMiddleware,
+  AuthController.toggle2FA
+);
 
 module.exports = router;
