@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const UserRepository = require("../repositories/UserRepository");
 const PasswordReset = require("../models/PasswordReset");
 const EmailVerification = require("../models/EmailVerification");
-const { sendPasswordResetEmail, sendVerificationEmail } = require("../config/email");
+const { sendPasswordResetEmail, sendVerificationEmail, send2FACodeEmail } = require("../config/email");
 
 class AuthService {
   // Generate JWT token
@@ -169,14 +169,13 @@ class AuthService {
   ========================== */
 
   async toggle2FA(userId, enabled) {
-    const user = await User.findById(userId);
+    const user = await UserRepository.findById(userId);
 
     if (!user) {
       throw new Error("Utilisateur introuvable");
     }
 
-    user.twoFactorEnabled = enabled;
-    await user.save();
+    await UserRepository.update(userId, { twoFactorEnabled: enabled });
 
     return {
       message: enabled

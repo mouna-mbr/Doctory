@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../assets/css/TwoFactor.css";
 
 export default function TwoFactor() {
@@ -6,6 +7,16 @@ export default function TwoFactor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const userId = location.state?.userId;
+
+  useEffect(() => {
+    // Redirect if no userId provided
+    if (!userId) {
+      navigate("/signin");
+    }
+  }, [userId, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,13 +31,12 @@ export default function TwoFactor() {
     try {
       setLoading(true);
 
-      // 🔗 BACKEND API (exemple)
       const res = await fetch("http://localhost:5000/api/auth/verify-2fa", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ userId, code })
       });
 
       const data = await res.json();
@@ -35,10 +45,22 @@ export default function TwoFactor() {
         throw new Error(data.message || "Code invalide");
       }
 
+      // Store the token and user data
+      if (data.data && data.data.token) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+      }
+
       setSuccess("Vérification réussie !");
       setTimeout(() => {
-        window.location.href = "/";
-      }, 1200);
+        // Redirect based on user role
+        const userRole = data.data.user.role;
+        if (userRole === "ADMIN") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
+      }, 1000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,10 +70,9 @@ export default function TwoFactor() {
 
   const resendCode = async () => {
     try {
-      await fetch("http://localhost:5000/api/auth/resend-2fa", {
-        method: "POST"
-      });
-      setSuccess("Un nouveau code a été envoyé");
+      setError("");
+      setSuccess("");
+      setSuccess("Fonctionnalité bientôt disponible");
     } catch {
       setError("Erreur lors de l’envoi du code");
     }

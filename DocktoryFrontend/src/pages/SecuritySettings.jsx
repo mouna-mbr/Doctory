@@ -37,6 +37,11 @@ export default function SecuritySettings() {
         });
 
         const data = await response.json();
+        
+        if (data.success && data.data) {
+          setUser(data.data);
+          setTwoFA(data.data.twoFactorEnabled || false);
+        }
       } catch (err) {
         console.error("Error fetching profile:", err);
       } finally {

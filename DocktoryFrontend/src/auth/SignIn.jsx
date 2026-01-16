@@ -48,6 +48,14 @@ const SignIn = () => {
       const data = await response.json();
 
       if (data.success) {
+        // Check if 2FA is required
+        if (data.data.twoFactorRequired) {
+          // Redirect to 2FA verification page with userId
+          navigate("/2fa", { state: { userId: data.data.userId } });
+          return;
+        }
+        
+        // Normal login flow
         localStorage.setItem("token", data.data.token);
         localStorage.setItem("user", JSON.stringify(data.data.user));
         

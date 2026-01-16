@@ -100,7 +100,7 @@ class AuthController {
   async changePassword(req, res) {
     try {
       const { oldPassword, newPassword } = req.body;
-      const userId = req.user.id; // From auth middleware
+      const userId = req.user.userId; // From auth middleware
 
       // Validation
       if (!oldPassword || !newPassword) {
@@ -138,7 +138,7 @@ class AuthController {
   // Get current user profile
   async getProfile(req, res) {
     try {
-      const userId = req.user.id; // From auth middleware
+      const userId = req.user.userId; // From auth middleware
       const UserService = require("../services/UserService");
       const user = await UserService.getUserById(userId);
 
@@ -334,54 +334,37 @@ class AuthController {
       });
     }
   }
+  
   async verify2FA(req, res) {
-  try {
-    const { userId, code } = req.body;
+    try {
+      const { userId, code } = req.body;
 
-    if (!userId || !code) {
-      return res.status(400).json({
+      if (!userId || !code) {
+        return res.status(400).json({
+          success: false,
+          message: "User ID and code are required",
+        });
+      }
+
+      const result = await AuthService.verify2FA(userId, code);
+
+      res.status(200).json({
+        success: true,
+        message: "2FA verification successful",
+        data: result,
+      });
+    } catch (error) {
+      res.status(401).json({
         success: false,
-        message: "User ID and code are required",
+        message: error.message,
       });
     }
-
-    const user = await UserService.getUserById(userId);
-
-    if (
-      !user ||
-      user.twoFactorCode !== code ||
-      user.twoFactorCodeExpiresAt < new Date()
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired 2FA code",
-      });
-    }
-
-    // Clear code
-    user.twoFactorCode = null;
-    user.twoFactorCodeExpiresAt = null;
-    await user.save();
-
-    const token = AuthService.generateToken(user);
-
-    res.status(200).json({
-      success: true,
-      message: "2FA verification successful",
-      data: { token, user },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
   }
-}
 
   
   async toggle2FA(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user.userId;
       const { enabled } = req.body;
 
       const result = await AuthService.toggle2FA(userId, enabled);

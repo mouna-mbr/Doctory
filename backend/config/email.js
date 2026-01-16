@@ -232,7 +232,110 @@ const sendVerificationEmail = async (email, verificationToken, fullName) => {
   }
 };
 
+// Send 2FA code email
+const send2FACodeEmail = async (email, code) => {
+  const transporter = createTransporter();
+
+  const mailOptions = {
+    from: `"Doctory" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Code de vérification 2FA - Doctory",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .header {
+              background-color: #2c3e50;
+              color: white;
+              padding: 20px;
+              text-align: center;
+              border-radius: 5px 5px 0 0;
+            }
+            .content {
+              background-color: white;
+              padding: 30px;
+              border-radius: 0 0 5px 5px;
+            }
+            .code-box {
+              background-color: #f0f0f0;
+              border: 2px dashed #2c3e50;
+              padding: 20px;
+              text-align: center;
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 5px;
+              margin: 20px 0;
+              border-radius: 5px;
+            }
+            .warning {
+              background-color: #fff3cd;
+              border-left: 4px solid #ffc107;
+              padding: 15px;
+              margin: 20px 0;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 20px;
+              color: #666;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🔐 Vérification de sécurité</h1>
+            </div>
+            <div class="content">
+              <h2>Bonjour,</h2>
+              
+              <p>Vous avez demandé à vous connecter à votre compte Doctory. Veuillez utiliser le code suivant pour compléter votre connexion :</p>
+              
+              <div class="code-box">
+                ${code}
+              </div>
+              
+              <p>Ce code est valide pendant <strong>10 minutes</strong>.</p>
+              
+              <div class="warning">
+                <strong>⚠️ Attention :</strong> Si vous n'avez pas tenté de vous connecter, ignorez cet email et changez votre mot de passe immédiatement.
+              </div>
+              
+              <p>Cordialement,<br>L'équipe Doctory</p>
+            </div>
+            <div class="footer">
+              <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`2FA code sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending 2FA email:", error);
+    throw new Error("Failed to send 2FA code");
+  }
+};
+
 module.exports = {
   sendPasswordResetEmail,
   sendVerificationEmail,
+  send2FACodeEmail,
 };
