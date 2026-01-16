@@ -99,6 +99,74 @@ class UserService {
       throw error;
     }
   }
+
+  // Approve license
+  async approveLicense(userId, adminId) {
+    try {
+      const user = await UserRepository.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (user.role !== "DOCTOR" && user.role !== "PHARMACIST") {
+        throw new Error("Only doctors and pharmacists require license verification");
+      }
+
+      if (!user.licenseDocument) {
+        throw new Error("No license document uploaded");
+      }
+
+      const updatedUser = await UserRepository.update(userId, {
+        isLicenseVerified: true,
+        licenseVerifiedAt: new Date(),
+        licenseVerifiedBy: adminId,
+        licenseRejectionReason: null,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Reject license
+  async rejectLicense(userId, reason) {
+    try {
+      const user = await UserRepository.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      if (user.role !== "DOCTOR" && user.role !== "PHARMACIST") {
+        throw new Error("Only doctors and pharmacists require license verification");
+      }
+
+      const updatedUser = await UserRepository.update(userId, {
+        isLicenseVerified: false,
+        licenseRejectionReason: reason,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Get pending licenses
+  async getPendingLicenses() {
+    try {
+      const pendingUsers = await UserRepository.findAll({
+        $or: [{ role: "DOCTOR" }, { role: "PHARMACIST" }],
+        licenseDocument: { $ne: null },
+        isLicenseVerified: false,
+        licenseRejectionReason: null,
+      });
+
+      return pendingUsers;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new UserService();

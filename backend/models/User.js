@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-    rating: {
+  rating: {
     type: Number,
     default: 0,
     min: 0,
@@ -107,6 +107,33 @@ twoFactorCodeExpiresAt: {
   reviewsCount: {
     type: Number,
     default: 0
+  },
+  
+  // License verification fields (for DOCTOR and PHARMACIST)
+  licenseDocument: {
+    type: String,
+    default: null,
+  },
+  licenseNumber: {
+    type: String,
+    default: null,
+  },
+  isLicenseVerified: {
+    type: Boolean,
+    default: false,
+  },
+  licenseVerifiedAt: {
+    type: Date,
+    default: null,
+  },
+  licenseVerifiedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  licenseRejectionReason: {
+    type: String,
+    default: null,
   },
 });
 

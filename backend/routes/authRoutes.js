@@ -1,13 +1,13 @@
 const express = require("express");
 const AuthController = require("../controllers/AuthController");
-
+const licenseUpload = require("../config/licenseUpload");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
 
 // Public routes
-router.post("/register", AuthController.register.bind(AuthController));
+router.post("/register", licenseUpload.single("licenseDocument"), AuthController.register.bind(AuthController));
 router.post("/login", AuthController.login.bind(AuthController));
 router.post("/forgot-password", AuthController.requestPasswordReset.bind(AuthController));
 router.post("/verify-reset-code", AuthController.verifyResetCode.bind(AuthController));

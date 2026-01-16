@@ -12,6 +12,9 @@ const UserList = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showLicenseModal, setShowLicenseModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [editFormData, setEditFormData] = useState({});
 
@@ -191,11 +194,84 @@ const UserList = () => {
     }));
   };
 
+  const handleViewLicense = (user) => {
+    setSelectedUser(user);
+    setShowLicenseModal(true);
+  };
+
+  const handleApproveLicense = async (userId) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir approuver cette licence ?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5000/api/users/${userId}/approve-license`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchUsers(); // Refresh the list
+        setShowLicenseModal(false);
+        alert("Licence approuvée avec succès");
+      } else {
+        alert("Erreur lors de l'approbation: " + data.message);
+      }
+    } catch (err) {
+      alert("Erreur lors de l'approbation");
+      console.error("Approve license error:", err);
+    }
+  };
+
+  const handleRejectLicense = async () => {
+    if (!rejectionReason.trim()) {
+      alert("Veuillez fournir une raison de rejet");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`http://localhost:5000/api/users/${selectedUser._id}/reject-license`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: rejectionReason })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        fetchUsers(); // Refresh the list
+        setShowRejectModal(false);
+        setShowLicenseModal(false);
+        setRejectionReason("");
+        alert("Licence rejetée");
+      } else {
+        alert("Erreur lors du rejet: " + data.message);
+      }
+    } catch (err) {
+      alert("Erreur lors du rejet");
+      console.error("Reject license error:", err);
+    }
+  };
+
   const closeModals = () => {
     setShowViewModal(false);
     setShowEditModal(false);
+    setShowLicenseModal(false);
+    setShowRejectModal(false);
     setSelectedUser(null);
     setEditFormData({});
+    setRejectionReason("");
   };
 
   const getRoleBadgeClass = (role) => {
@@ -299,6 +375,7 @@ const UserList = () => {
               <th>Téléphone</th>
               <th>Rôle</th>
               <th>Statut</th>
+              <th>Licence</th>
               <th>Date d'inscription</th>
               <th>Actions</th>
             </tr>
@@ -306,7 +383,7 @@ const UserList = () => {
           <tbody>
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan="7" className="no-data">
+                <td colSpan="8" className="no-data">
                   Aucun utilisateur trouvé
                 </td>
               </tr>
@@ -335,6 +412,34 @@ const UserList = () => {
                     </span>
                   </td>
                   <td>{new Date(user.createdAt).toLocaleDateString('fr-FR')}</td>
+                  <td>
+                    {(user.role === "DOCTOR" || user.role === "PHARMACIST") ? (
+                      user.licenseDocument ? (
+                        <div className="license-status">
+                          {user.isLicenseVerified ? (
+                            <span className="license-verified">
+                              <FaCheckCircle /> Vérifiée
+                            </span>
+                          ) : user.licenseRejectionReason ? (
+                            <span className="license-rejected">
+                              <FaTimesCircle /> Rejetée
+                            </span>
+                          ) : (
+                            <button 
+                              className="btn-view-license"
+                              onClick={() => handleViewLicense(user)}
+                            >
+                              <FaEye /> En attente
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="no-license">Aucune</span>
+                      )
+                    ) : (
+                      <span className="not-applicable">N/A</span>
+                    )}
+                  </td>
                   <td>
                     <div className="action-buttons">
                       <button 
@@ -509,6 +614,114 @@ const UserList = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* License Modal */}
+      {showLicenseModal && selectedUser && (
+        <div className="modal-overlay" onClick={closeModals}>
+          <div className="modal-content license-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Vérification de Licence - {selectedUser.fullName}</h2>
+              <button className="close-btn" onClick={closeModals}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="license-details">
+                <div className="detail-item">
+                  <label>Rôle:</label>
+                  <p><span className={`role-badge ${getRoleBadgeClass(selectedUser.role)}`}>
+                    {getRoleLabel(selectedUser.role)}
+                  </span></p>
+                </div>
+                <div className="detail-item">
+                  <label>Numéro de licence:</label>
+                  <p>{selectedUser.licenseNumber || "Non fourni"}</p>
+                </div>
+                {selectedUser.licenseRejectionReason && (
+                  <div className="detail-item rejection-reason">
+                    <label>Raison du rejet précédent:</label>
+                    <p>{selectedUser.licenseRejectionReason}</p>
+                  </div>
+                )}
+              </div>
+              
+              {selectedUser.licenseDocument && (
+                <div className="license-document-viewer">
+                  <h3>Document de Licence</h3>
+                  {selectedUser.licenseDocument.endsWith('.pdf') ? (
+                    <div className="pdf-viewer">
+                      <iframe 
+                        src={`http://localhost:5000${selectedUser.licenseDocument}`}
+                        title="License Document"
+                        width="100%"
+                        height="500px"
+                      />
+                      <a 
+                        href={`http://localhost:5000${selectedUser.licenseDocument}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="download-link"
+                      >
+                        📄 Ouvrir le PDF dans un nouvel onglet
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="image-viewer">
+                      <img 
+                        src={`http://localhost:5000${selectedUser.licenseDocument}`}
+                        alt="License Document"
+                        className="license-image"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn-reject" 
+                onClick={() => setShowRejectModal(true)}
+              >
+                <FaTimesCircle /> Rejeter
+              </button>
+              <button 
+                className="btn-approve" 
+                onClick={() => handleApproveLicense(selectedUser._id)}
+              >
+                <FaCheckCircle /> Approuver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedUser && (
+        <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="modal-content reject-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Rejeter la Licence</h2>
+              <button className="close-btn" onClick={() => setShowRejectModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>Veuillez fournir une raison pour le rejet de la licence de <strong>{selectedUser.fullName}</strong>:</p>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Raison du rejet..."
+                rows="5"
+                className="rejection-textarea"
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setShowRejectModal(false)}>
+                Annuler
+              </button>
+              <button className="btn-reject" onClick={handleRejectLicense}>
+                Confirmer le Rejet
+              </button>
+            </div>
           </div>
         </div>
       )}
