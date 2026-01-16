@@ -99,6 +99,16 @@ class AuthService {
         throw new Error("Please verify your email before logging in. Check your inbox for the verification link.");
       }
 
+      // Check if license is verified for doctors and pharmacists
+      if ((user.role === "DOCTOR" || user.role === "PHARMACIST")) {
+        if (!user.isLicenseVerified) {
+          if (user.licenseRejectionReason) {
+            throw new Error(`Your license was rejected. Reason: ${user.licenseRejectionReason}. Please contact support.`);
+          }
+          throw new Error("Your professional license is pending verification by admin. Please wait for approval.");
+        }
+      }
+
       // Verify password
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
       if (!isPasswordValid) {
@@ -121,6 +131,7 @@ class AuthService {
           phoneNumber: user.phoneNumber,
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified,
+          isLicenseVerified: user.isLicenseVerified,
           createdAt: user.createdAt,
           lastLoginAt: new Date(),
         },

@@ -294,6 +294,72 @@ class UserController {
       });
     }
   }
+
+  // Approve license (admin only)
+  async approveLicense(req, res) {
+    try {
+      const { id } = req.params;
+      const adminId = req.user.userId;
+
+      const result = await UserService.approveLicense(id, adminId);
+
+      res.status(200).json({
+        success: true,
+        message: "License approved successfully",
+        data: result,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Reject license (admin only)
+  async rejectLicense(req, res) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({
+          success: false,
+          message: "Rejection reason is required",
+        });
+      }
+
+      const result = await UserService.rejectLicense(id, reason);
+
+      res.status(200).json({
+        success: true,
+        message: "License rejected",
+        data: result,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Get pending license verifications (admin only)
+  async getPendingLicenses(req, res) {
+    try {
+      const result = await UserService.getPendingLicenses();
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new UserController();

@@ -21,7 +21,6 @@ const SignUp = () => {
     specialty: "",
     yearsOfExperience: "",
     licenseNumber: "",
-    licenseDocumentUrl: "",
     consultationPrice: "",
     // Patient fields
     dateOfBirth: "",
@@ -31,6 +30,7 @@ const SignUp = () => {
     pharmacyPhone: "",
     pharmacyLicenseNumber: ""
   });
+  const [licenseFile, setLicenseFile] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +45,26 @@ const SignUp = () => {
   const handleRoleChange = (e) => {
     setRole(e.target.value);
     setError("");
+    setLicenseFile(null); // Reset file when role changes
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Le fichier ne doit pas dépasser 10 MB");
+        return;
+      }
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        setError("Format de fichier invalide. Utilisez JPG, PNG ou PDF");
+        return;
+      }
+      setLicenseFile(file);
+      setError("");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -69,44 +89,49 @@ const SignUp = () => {
       return;
     }
 
+    // Validate license document for doctors and pharmacists
+    if ((role === "doctor" || role === "pharmacist") && !licenseFile) {
+      setError(`Le document de licence professionnelle est requis pour les ${role === "doctor" ? "docteurs" : "pharmaciens"}`);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Build request payload based on role
-      const payload = {
-        role: role.toUpperCase(),
-        fullName: formData.fullName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        password: formData.password
-      };
+      // Build FormData for multipart upload
+      const formDataToSend = new FormData();
+      
+      // Add basic fields
+      formDataToSend.append('role', role.toUpperCase());
+      formDataToSend.append('fullName', formData.fullName);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phoneNumber', formData.phoneNumber);
+      formDataToSend.append('password', formData.password);
 
       // Add role-specific fields
       if (role === "doctor") {
-        payload.gender = formData.gender;
-        if (formData.specialty) payload.specialty = formData.specialty;
-        if (formData.yearsOfExperience) payload.yearsOfExperience = parseInt(formData.yearsOfExperience);
-        if (formData.licenseNumber) payload.licenseNumber = formData.licenseNumber;
-        if (formData.licenseDocumentUrl) payload.licenseDocumentUrl = formData.licenseDocumentUrl;
-        if (formData.consultationPrice) payload.consultationPrice = parseFloat(formData.consultationPrice);
+        formDataToSend.append('gender', formData.gender);
+        if (formData.specialty) formDataToSend.append('specialty', formData.specialty);
+        if (formData.yearsOfExperience) formDataToSend.append('yearsOfExperience', formData.yearsOfExperience);
+        if (formData.licenseNumber) formDataToSend.append('licenseNumber', formData.licenseNumber);
+        if (formData.consultationPrice) formDataToSend.append('consultationPrice', formData.consultationPrice);
+        if (licenseFile) formDataToSend.append('licenseDocument', licenseFile);
       } else if (role === "patient") {
-        payload.gender = formData.gender;
-        if (formData.dateOfBirth) payload.dateOfBirth = formData.dateOfBirth;
+        formDataToSend.append('gender', formData.gender);
+        if (formData.dateOfBirth) formDataToSend.append('dateOfBirth', formData.dateOfBirth);
       } else if (role === "pharmacist") {
-        if (formData.pharmacyName) payload.pharmacyName = formData.pharmacyName;
-        if (formData.pharmacyAddress) payload.pharmacyAddress = formData.pharmacyAddress;
-        if (formData.pharmacyPhone) payload.pharmacyPhone = formData.pharmacyPhone;
-        if (formData.pharmacyLicenseNumber) payload.pharmacyLicenseNumber = formData.pharmacyLicenseNumber;
+        if (formData.pharmacyName) formDataToSend.append('pharmacyName', formData.pharmacyName);
+        if (formData.pharmacyAddress) formDataToSend.append('pharmacyAddress', formData.pharmacyAddress);
+        if (formData.pharmacyPhone) formDataToSend.append('pharmacyPhone', formData.pharmacyPhone);
+        if (formData.pharmacyLicenseNumber) formDataToSend.append('pharmacyLicenseNumber', formData.pharmacyLicenseNumber);
+        if (licenseFile) formDataToSend.append('licenseDocument', licenseFile);
       } else if (role === "admin") {
-        payload.gender = formData.gender;
+        formDataToSend.append('gender', formData.gender);
       }
 
       const response = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
+        body: formDataToSend
       });
 
       const data = await response.json();
@@ -238,20 +263,13 @@ const SignUp = () => {
                   onChange={handleChange}
                 />
                 <input 
-                  type="url" 
-                  name="licenseDocumentUrl"
-                  placeholder="Lien du document de licence" 
-                  value={formData.licenseDocumentUrl}
+                  type="number" 
+                  name="consultationPrice"
+                  placeholder="Prix de consultation" 
+                  value={formData.consultationPrice}
                   onChange={handleChange}
                 />
               </div>
-              <input 
-                type="number" 
-                name="consultationPrice"
-                placeholder="Prix de consultation" 
-                value={formData.consultationPrice}
-                onChange={handleChange}
-              />
             </>
           )}
 
@@ -323,6 +341,23 @@ const SignUp = () => {
               required 
             />
           </div>
+
+          {/* LICENSE UPLOAD - Centered at bottom */}
+          {(role === "doctor" || role === "pharmacist") && (
+            <div className="file-upload-section">
+              <label htmlFor="licenseUpload" className="file-upload-label">
+                📄 Document de licence professionnelle * (JPG, PNG, PDF - Max 10MB)
+              </label>
+              <input 
+                type="file" 
+                id="licenseUpload"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={handleFileChange}
+                required
+              />
+              {licenseFile && <p className="file-name">✓ {licenseFile.name}</p>}
+            </div>
+          )}
 
           <div style={{ display: "flex", justifyContent: "center", margin: "15px 0" }}>
             <ReCAPTCHA

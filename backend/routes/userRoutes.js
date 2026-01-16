@@ -62,4 +62,23 @@ router.post(
   UserController.uploadProfileImage.bind(UserController)
 );
 
+// License verification routes (Admin only)
+router.get(
+  "/pending-licenses/all",
+  roleMiddleware("ADMIN"),
+  UserController.getPendingLicenses.bind(UserController)
+);
+
+router.patch(
+  "/:id/approve-license",
+  roleMiddleware("ADMIN"),
+  UserController.approveLicense.bind(UserController)
+);
+
+router.patch(
+  "/:id/reject-license",
+  roleMiddleware("ADMIN"),
+  UserController.rejectLicense.bind(UserController)
+);
+
 module.exports = router;

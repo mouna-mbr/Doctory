@@ -40,11 +40,24 @@ class AuthController {
         });
       }
 
+      // Check if license document is required and provided
+      if ((role === "DOCTOR" || role === "PHARMACIST") && !req.file) {
+        return res.status(400).json({
+          success: false,
+          message: `Professional license document is required for ${role.toLowerCase()}s`,
+        });
+      }
+
+      // Add license document path to request body if uploaded
+      if (req.file) {
+        req.body.licenseDocument = `/uploads/licenses/${req.file.filename}`;
+      }
+
       const result = await AuthService.register(req.body);
 
       res.status(201).json({
         success: true,
-        message: "User registered successfully",
+        message: "User registered successfully. Please wait for admin to verify your license.",
         data: result,
       });
     } catch (error) {
