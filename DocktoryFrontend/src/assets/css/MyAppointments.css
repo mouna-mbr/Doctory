@@ -1,4 +1,22 @@
+
 /* Container principal */
+.join-btn {
+  background: linear-gradient(135deg, #4CAF50, #2ecc71);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.join-btn:hover {
+  opacity: 0.9;
+}
+
 .my-appointments-container {
   max-width: 1200px;
   margin: 0 auto;

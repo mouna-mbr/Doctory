@@ -333,6 +333,22 @@ const send2FACodeEmail = async (email, code) => {
     throw new Error("Failed to send 2FA code");
   }
 };
+exports.sendAppointmentConfirmed = async ({ to, name, doctor, date, link }) => {
+  await transporter.sendMail({
+    from: "Doctory <no-reply@doctory.tn>",
+    to,
+    subject: "Rendez-vous confirmé",
+    html: `
+      <p>Bonjour ${name},</p>
+      <p>Votre rendez-vous avec <b>${doctor}</b> est confirmé.</p>
+      <p><b>Date :</b> ${new Date(date).toLocaleString("fr-FR")}</p>
+      <p>
+        👉 <a href="${link}">Rejoindre la consultation</a>
+      </p>
+      <p>Merci,<br/>Doctory</p>
+    `,
+  });
+};
 
 module.exports = {
   sendPasswordResetEmail,

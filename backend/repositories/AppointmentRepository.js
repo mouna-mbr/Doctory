@@ -21,7 +21,15 @@ class AppointmentRepository {
       .populate("patientId", "fullName email phoneNumber")
       .sort({ startDateTime: 1 });
   }
-
+    async findByIdAndUpdate(id, update) {
+    return await Appointment.findByIdAndUpdate(
+      id,
+      update,
+      { new: true }
+    )
+    .populate("doctorId", "fullName email")
+    .populate("patientId", "fullName email");
+  }
   // Find appointments by patient ID
   async findByPatientId(patientId, filters = {}) {
     const query = { patientId, ...filters };

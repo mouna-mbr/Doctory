@@ -755,13 +755,22 @@ const MyAppointments = () => {
                             </div>
                           )}
                           
-                          {appointment.status === "CONFIRMED" && isUpcoming && (
+                          {appointment.status === "CONFIRMED" && isUpcoming  && (
+                            <>
+                            <button
+                              className="join-btn"
+                              onClick={() => window.location.href = `/video/${appointment.videoRoomId}`}
+                            >
+                              <FaExternalLinkAlt /> Rejoindre la consultation
+                            </button>
+
                             <button 
                               className="complete-btn"
                               onClick={() => handleCompleteAppointment(appointment._id)}
                             >
                               <FaCalendarCheck /> Marquer comme terminé
                             </button>
+                            </>
                           )}
                           
                           {appointment.status === "COMPLETED" && (

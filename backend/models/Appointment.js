@@ -26,6 +26,10 @@ const appointmentSchema = new mongoose.Schema(
       default: "REQUESTED",
       required: true,
     },
+    videoRoomId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

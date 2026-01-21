@@ -86,68 +86,83 @@ class AppointmentService {
 
     return appointment;
   }
+async confirmAppointment(appointmentId, doctorId) {
+  const appointment = await AppointmentRepository.findById(appointmentId);
 
-  // Doctor confirms appointment
-  async confirmAppointment(appointmentId, doctorId) {
-    const appointment = await AppointmentRepository.findById(appointmentId);
-
-    if (!appointment) {
-      throw new Error("Appointment not found");
-    }
-
-    // Verify doctor owns this appointment
-    if (appointment.doctorId._id.toString() !== doctorId) {
-      throw new Error("Unauthorized");
-    }
-
-    // Can only confirm REQUESTED appointments
-    if (appointment.status !== "REQUESTED") {
-      throw new Error(`Cannot confirm appointment with status: ${appointment.status}`);
-    }
-
-    // Check if appointment is still in the future
-    if (new Date(appointment.startDateTime) <= new Date()) {
-      throw new Error("Cannot confirm past appointment");
-    }
-
-    // Check for conflicts again (in case another appointment was confirmed)
-    const conflicts = await AppointmentRepository.findConflictingAppointments(
-      doctorId,
-      appointment.startDateTime,
-      appointment.endDateTime,
-      appointmentId
-    );
-
-    if (conflicts.length > 0) {
-      throw new Error("Time slot no longer available");
-    }
-
-    const updatedAppointment = await AppointmentRepository.updateStatus(
-      appointmentId,
-      "CONFIRMED"
-    );
-
-    // Create notification for patient
-    const doctor = await UserRepository.findById(doctorId);
-    const formattedDate = new Date(appointment.startDateTime).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    await NotificationService.createAppointmentConfirmedNotification(
-      appointment.patientId._id.toString(),
-      doctor.fullName,
-      appointmentId,
-      formattedDate
-    );
-
-    return {
-      message: "Appointment confirmed successfully",
-      appointment: updatedAppointment,
-    };
+  if (!appointment) {
+    throw new Error("Rendez-vous introuvable");
   }
+
+  // S'assurer que les IDs sont en string pour la comparaison
+  if (appointment.doctorId._id.toString() !== doctorId.toString()) {
+    throw new Error("Non autorisé");
+  }
+
+  if (appointment.status !== "REQUESTED") {
+    throw new Error(`Impossible de confirmer un rendez-vous avec le statut: ${appointment.status}`);
+  }
+
+  if (new Date(appointment.startDateTime) <= new Date()) {
+    throw new Error("Impossible de confirmer un rendez-vous passé");
+  }
+
+  const conflicts = await AppointmentRepository.findConflictingAppointments(
+    doctorId,
+    appointment.startDateTime,
+    appointment.endDateTime,
+    appointmentId
+  );
+
+  if (conflicts.length > 0) {
+    throw new Error("Ce créneau n'est plus disponible");
+  }
+
+  // Créer l'ID de salle de vidéo
+  const videoRoomId = `room_${appointmentId}`;
+
+  // Mettre à jour le rendez-vous
+  const updatedAppointment = await Appointment.findByIdAndUpdate(
+    appointmentId,
+    {
+      status: "CONFIRMED",
+      videoRoomId: videoRoomId,
+    },
+    { new: true, runValidators: true }
+  ).populate('doctorId').populate('patientId');
+
+  if (!updatedAppointment) {
+    throw new Error("Erreur lors de la confirmation du rendez-vous");
+  }
+
+  // Formatage de la date pour la notification
+  const formattedDate = new Date(updatedAppointment.startDateTime).toLocaleDateString(
+    "fr-FR",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
+
+  // Créer la notification
+  await NotificationService.createAppointmentConfirmedNotification(
+    updatedAppointment.patientId._id.toString(),
+    updatedAppointment.doctorId.fullName,
+    appointmentId,
+    formattedDate
+  );
+
+  return {
+    success: true,
+    message: "Rendez-vous confirmé avec succès",
+    appointment: updatedAppointment,
+    videoRoomId: videoRoomId, // Retourner l'ID de la salle
+  };
+}
+
+
 
   // Cancel appointment (Doctor or Patient)
   async cancelAppointment(appointmentId, userId, userRole) {

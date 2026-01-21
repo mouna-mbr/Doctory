@@ -26,6 +26,7 @@ import SecuritySettings from "./pages/SecuritySettings";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserList from "./pages/admin/UserList";
+import VideoRoom from "./pages/VideoRoom";
 
 
 /* Layout avec Navbar + Footer (sans Chatbot ici) */
@@ -182,6 +183,14 @@ function App() {
           }
         />
 
+          <Route
+           path="/video/:roomId" 
+           element={
+            <>
+                        <Navbar />
+                        <VideoRoom />
+                        <Footer />      
+                      </>} />
 
         {/* Page 404 */}
         <Route
