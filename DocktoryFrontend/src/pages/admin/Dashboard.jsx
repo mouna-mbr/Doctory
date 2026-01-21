@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { FaUsers, FaUserMd, FaPills, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt, FaTimes } from "react-icons/fa";
+import Swal from "sweetalert2";
 import "../../assets/css/Dashboard.css";
 
 const Dashboard = () => {
@@ -90,9 +91,18 @@ const Dashboard = () => {
   };
 
   const handleApprove = async (doctorId) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir approuver ce docteur ?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Approuver ce docteur?',
+      text: "Le docteur sera activé et pourra utiliser la plateforme",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, approuver',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -107,22 +117,48 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert("Docteur approuvé avec succès");
+        Swal.fire({
+          icon: 'success',
+          title: 'Approuvé!',
+          text: 'Le docteur a été approuvé avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
         fetchPendingDoctors();
         fetchDashboardStats();
       } else {
-        alert("Erreur lors de l'approbation");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || "Erreur lors de l'approbation",
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors de l'approbation");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Erreur lors de l'approbation",
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Approve doctor error:", err);
     }
   };
 
   const handleReject = async (doctorId) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir rejeter ce docteur ? Cette action supprimera le compte.")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Rejeter ce docteur?',
+      text: "Cette action supprimera le compte définitivement!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, rejeter',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -137,14 +173,31 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert("Docteur rejeté et compte supprimé");
+        Swal.fire({
+          icon: 'success',
+          title: 'Rejeté!',
+          text: 'Le docteur a été rejeté et le compte supprimé',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
         fetchPendingDoctors();
         fetchDashboardStats();
       } else {
-        alert("Erreur lors du rejet");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || "Erreur lors du rejet",
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors du rejet");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Erreur lors du rejet",
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Reject doctor error:", err);
     }
   };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FaSearch, FaEdit, FaTrash, FaEye, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import Swal from "sweetalert2";
 import "../../assets/css/UserList.css";
 
 const UserList = () => {
@@ -88,9 +89,18 @@ const UserList = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr?',
+      text: "Cette action supprimera définitivement cet utilisateur!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -106,12 +116,29 @@ const UserList = () => {
 
       if (data.success) {
         setUsers(users.filter(user => user._id !== userId));
-        alert("Utilisateur supprimé avec succès");
+        Swal.fire({
+          icon: 'success',
+          title: 'Supprimé!',
+          text: 'Utilisateur supprimé avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert("Erreur lors de la suppression");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de la suppression',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors de la suppression");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la suppression',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Delete user error:", err);
     }
   };
@@ -134,12 +161,29 @@ const UserList = () => {
 
       if (data.success) {
         fetchUsers(); // Refresh the list
-        alert(data.message);
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: data.message,
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert("Erreur lors de la mise à jour du statut");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: 'Erreur lors de la mise à jour du statut',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors de la mise à jour");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la mise à jour',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Toggle status error:", err);
     }
   };
@@ -181,12 +225,29 @@ const UserList = () => {
         fetchUsers(); // Refresh the list
         setShowEditModal(false);
         setSelectedUser(null);
-        alert("Utilisateur mis à jour avec succès");
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: 'Utilisateur mis à jour avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert(data.message || "Erreur lors de la mise à jour");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de la mise à jour',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors de la mise à jour");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la mise à jour',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Update user error:", err);
     }
   };
@@ -205,9 +266,18 @@ const UserList = () => {
   };
 
   const handleApproveLicense = async (userId) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir approuver cette licence ?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Approuver cette licence?',
+      text: "La licence sera vérifiée et approuvée",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, approuver',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -224,19 +294,41 @@ const UserList = () => {
       if (data.success) {
         fetchUsers(); // Refresh the list
         setShowLicenseModal(false);
-        alert("Licence approuvée avec succès");
+        Swal.fire({
+          icon: 'success',
+          title: 'Approuvée!',
+          text: 'Licence approuvée avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert("Erreur lors de l'approbation: " + data.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || "Erreur lors de l'approbation",
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors de l'approbation");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: "Erreur lors de l'approbation",
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Approve license error:", err);
     }
   };
 
   const handleRejectLicense = async () => {
     if (!rejectionReason.trim()) {
-      alert("Veuillez fournir une raison de rejet");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Raison requise',
+        text: 'Veuillez fournir une raison de rejet',
+        confirmButtonColor: '#1B2688'
+      });
       return;
     }
 
@@ -259,12 +351,29 @@ const UserList = () => {
         setShowRejectModal(false);
         setShowLicenseModal(false);
         setRejectionReason("");
-        alert("Licence rejetée");
+        Swal.fire({
+          icon: 'success',
+          title: 'Rejetée!',
+          text: 'Licence rejetée avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert("Erreur lors du rejet: " + data.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors du rejet',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      alert("Erreur lors du rejet");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors du rejet',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Reject license error:", err);
     }
   };
