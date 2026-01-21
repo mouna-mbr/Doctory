@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaBell, FaTrash, FaCheckCircle, FaTimes } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import '../assets/css/Notifications.css';
 
 export default function Notifications() {
@@ -73,6 +74,19 @@ export default function Notifications() {
 
   // Delete selected notification
   const deleteNotification = async (notificationId) => {
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr?',
+      text: "Cette notification sera supprimée définitivement",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ff6b6b',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}`, {
@@ -87,11 +101,29 @@ export default function Notifications() {
         setNotifications(notifications.filter(n => n._id !== notificationId));
         selectedNotifications.delete(notificationId);
         setSelectedNotifications(new Set(selectedNotifications));
+        Swal.fire({
+          icon: 'success',
+          title: 'Supprimée!',
+          text: 'La notification a été supprimée',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        setError("Erreur lors de la suppression");
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de la suppression',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
-      setError("Erreur lors de la suppression de la notification");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la suppression de la notification',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Error deleting notification:", err);
     }
   };
@@ -100,13 +132,67 @@ export default function Notifications() {
   const deleteSelectedNotifications = async () => {
     if (selectedNotifications.size === 0) return;
 
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr?',
+      text: `${selectedNotifications.size} notification${selectedNotifications.size > 1 ? 's' : ''} seront supprimées définitivement`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ff6b6b',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer tout',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
+
     setDeleteLoading(true);
     try {
+      const token = localStorage.getItem("token");
+      let successCount = 0;
+      let errorCount = 0;
+
       for (const notificationId of selectedNotifications) {
-        await deleteNotification(notificationId);
+        try {
+          const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}`, {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (err) {
+          errorCount++;
+          console.error("Error deleting notification:", err);
+        }
       }
+
+      // Refresh notifications list
+      await fetchNotifications();
       setSelectedNotifications(new Set());
       setSelectAll(false);
+
+      if (errorCount === 0) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: `${successCount} notification${successCount > 1 ? 's supprimées' : ' supprimée'}`,
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Partiellement supprimé',
+          text: `${successCount} supprimées, ${errorCount} erreur${errorCount > 1 ? 's' : ''}`,
+          confirmButtonColor: '#1B2688'
+        });
+      }
     } finally {
       setDeleteLoading(false);
     }
@@ -132,14 +218,31 @@ export default function Notifications() {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:5000/api/notifications/mark-all-read", {
+      const response = await fetch("http://localhost:5000/api/notifications/mark-all-read", {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      const data = await response.json();
+      if (data.success) {
+        await fetchNotifications();
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: 'Toutes les notifications ont été marquées comme lues',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
     } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors du marquage des notifications',
+        confirmButtonColor: '#1B2688'
+      });
       console.error("Error marking all as read:", err);
     }
   };
