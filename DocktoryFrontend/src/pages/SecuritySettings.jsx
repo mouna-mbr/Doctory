@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 import "../assets/css/SecuritySettings.css";
 
 export default function SecuritySettings() {
@@ -67,7 +68,19 @@ export default function SecuritySettings() {
     const data = await res.json();
     if (data.success) {
       setTwoFA(!twoFA);
-      alert(data.message);
+      Swal.fire({
+        icon: "success",
+        title: "Succès!",
+        text: data.message,
+        confirmButtonColor: "#1B2688",
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: data.message || "Une erreur s'est produite",
+        confirmButtonColor: "#1B2688",
+      });
     }
   };
 
@@ -91,11 +104,21 @@ export default function SecuritySettings() {
 
     const data = await res.json();
     if (data.success) {
-      alert("Mot de passe modifié avec succès");
+      Swal.fire({
+        icon: "success",
+        title: "Succès!",
+        text: "Mot de passe modifié avec succès",
+        confirmButtonColor: "#1B2688",
+      });
       setOldPassword("");
       setNewPassword("");
     } else {
-      alert(data.message);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: data.message || "Impossible de modifier le mot de passe",
+        confirmButtonColor: "#1B2688",
+      });
     }
   };
 

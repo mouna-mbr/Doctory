@@ -17,8 +17,10 @@ import {
   FaUser,
   FaPills,
   FaComment,
-  FaCalendarPlus
+  FaCalendarPlus,
+  FaTrash
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 import "../assets/css/VisitProfile.css";
 
 const VisitProfile = () => {
@@ -171,13 +173,29 @@ const fetchDoctorAvailability = async () => {
 
   const handleSubmitReview = async () => {
     if (!localStorage.getItem("token")) {
-      alert("Veuillez vous connecter pour ajouter un avis");
-      navigate("/signin");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour ajouter un avis',
+        confirmButtonColor: '#1B2688',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/signin");
+        }
+      });
       return;
     }
 
     if (!newReview.comment.trim()) {
-      alert("Veuillez écrire un commentaire");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Commentaire requis',
+        text: 'Veuillez écrire un commentaire',
+        confirmButtonColor: '#1B2688'
+      });
       return;
     }
 
@@ -211,23 +229,106 @@ const fetchDoctorAvailability = async () => {
       const data = await response.json();
       
       if (data.success) {
-        alert("Avis ajouté avec succès!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Avis publié!',
+          text: 'Votre avis a été ajouté avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
         setShowReviewForm(false);
         setNewReview({ rating: 5, comment: "" });
         fetchReviews(user.role); // Rafraîchir les avis
       } else {
-        alert("Erreur: " + data.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de l\'ajout de l\'avis',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error submitting review:", err);
-      alert("Erreur lors de l'ajout de l'avis");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de l\'ajout de l\'avis',
+        confirmButtonColor: '#1B2688'
+      });
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    const result = await Swal.fire({
+      title: 'Supprimer cet avis?',
+      text: "Cette action est irréversible",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Supprimé!',
+          text: 'Votre avis a été supprimé avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchReviews(user.role); // Rafraîchir les avis
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de la suppression',
+          confirmButtonColor: '#1B2688'
+        });
+      }
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la suppression de l\'avis',
+        confirmButtonColor: '#1B2688'
+      });
     }
   };
 
   const handleBookAppointment = () => {
     if (!localStorage.getItem("token")) {
-      alert("Veuillez vous connecter pour prendre un rendez-vous");
-      navigate("/signin");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour prendre un rendez-vous',
+        confirmButtonColor: '#1B2688',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/signin");
+        }
+      });
       return;
     }
     
@@ -549,23 +650,44 @@ const fetchDoctorAvailability = async () => {
               </div>
             ) : (
               <div className="reviews-list">
-                {reviews.map((review, index) => (
-                  <div key={review._id || index} className="review-card">
-                    <div className="review-header">
-                      <div className="reviewer-info">
-                        <strong>{review.patientName || review.userName || "Anonyme"}</strong>
-                        <div className="review-rating">
-                          {"★".repeat(review.rating || 5)}
-                          <span className="rating-text">{review.rating || 5}/5</span>
+                {reviews.map((review, index) => {
+                  // Vérifier si l'utilisateur actuel est l'auteur de cet avis
+                  const isAuthor = currentUser && (
+                    review.reviewerId?._id === currentUser._id || 
+                    review.reviewerId?.id === currentUser.id ||
+                    review.reviewerId === currentUser._id ||
+                    review.reviewerId === currentUser.id
+                  );
+                  
+                  return (
+                    <div key={review._id || index} className="review-card">
+                      <div className="review-header">
+                        <div className="reviewer-info">
+                          <strong>{review.patientName || review.userName || review.reviewerId?.fullName || "Anonyme"}</strong>
+                          <div className="review-rating">
+                            {"★".repeat(review.rating || 5)}
+                            <span className="rating-text">{review.rating || 5}/5</span>
+                          </div>
+                        </div>
+                        <div className="review-header-right">
+                          <span className="review-date">
+                            {formatDate(review.createdAt)}
+                          </span>
+                          {isAuthor && (
+                            <button 
+                              className="delete-review-btn"
+                              onClick={() => handleDeleteReview(review._id)}
+                              title="Supprimer mon avis"
+                            >
+                              <FaTrash />
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <span className="review-date">
-                        {formatDate(review.createdAt)}
-                      </span>
+                      <p className="review-comment">{review.comment}</p>
                     </div>
-                    <p className="review-comment">{review.comment}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import Services from "./pages/Services";
 import TwoFactor from "./pages/TwoFactor";
 import SecuritySettings from "./pages/SecuritySettings";
+import Notifications from "./pages/Notifications";
 import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import UserList from "./pages/admin/UserList";
@@ -191,6 +192,14 @@ function App() {
                         <VideoRoom />
                         <Footer />      
                       </>} />
+        <Route
+          path="/notifications"
+          element={
+            <MainLayout>
+              <Notifications />
+            </MainLayout>
+          }
+        />
 
         {/* Page 404 */}
         <Route
