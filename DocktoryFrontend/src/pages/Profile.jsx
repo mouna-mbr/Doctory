@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { FaCalendarAlt, FaClock, FaCalendarPlus, FaCalendarCheck, FaCalendarTimes, FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa"
+import Swal from "sweetalert2"
 import "../assets/css/Profile.css"
 
 const Profile = () => {
@@ -264,7 +265,12 @@ const Profile = () => {
     const responseText = responseTexts[reviewId]?.trim();
     
     if (!responseText) {
-      alert("Veuillez écrire une réponse");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Réponse vide',
+        text: 'Veuillez écrire une réponse',
+        confirmButtonColor: '#1B2688'
+      });
       return;
     }
 
@@ -302,13 +308,30 @@ const Profile = () => {
         setRespondingTo(null);
         setResponseTexts(prev => ({ ...prev, [reviewId]: "" }));
         
-        alert("Réponse ajoutée avec succès!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Réponse ajoutée!',
+          text: 'Votre réponse a été publiée avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        alert("Erreur: " + (data.message || "Impossible d'ajouter la réponse"));
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Impossible d\'ajouter la réponse',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error adding response:", err);
-      alert("Erreur lors de l'ajout de la réponse");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de l\'ajout de la réponse',
+        confirmButtonColor: '#1B2688'
+      });
     } finally {
       setResponseLoading(prev => ({ ...prev, [reviewId]: false }));
     }
@@ -360,7 +383,12 @@ const Profile = () => {
 
   const handleAddSlot = async () => {
     if (!newSlot.date || !newSlot.startTime || !newSlot.endTime) {
-      alert("Veuillez remplir tous les champs");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Champs requis',
+        text: 'Veuillez remplir tous les champs',
+        confirmButtonColor: '#1B2688'
+      });
       return;
     }
 
@@ -385,7 +413,14 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert("Créneau ajouté avec succès!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: 'Créneau ajouté avec succès!',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
         setShowAddSlot(false);
         setNewSlot({ date: "", startTime: "", endTime: "" });
         
@@ -400,16 +435,37 @@ const Profile = () => {
           setAvailability(availabilityData.data);
         }
       } else {
-        alert("Erreur: " + data.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de l\'ajout du créneau',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error adding slot:", err);
-      alert("Erreur lors de l'ajout du créneau");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de l\'ajout du créneau',
+        confirmButtonColor: '#1B2688'
+      });
     }
   };
 
   const handleDeleteSlot = async (slotId) => {
-    if (!confirm("Supprimer ce créneau?")) return;
+    const result = await Swal.fire({
+      title: 'Supprimer ce créneau?',
+      text: "Cette action est irréversible",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    });
+    
+    if (!result.isConfirmed) return;
     
     try {
       const token = localStorage.getItem("token");
@@ -425,10 +481,30 @@ const Profile = () => {
       
       if (data.success) {
         setAvailability(availability.filter(slot => slot._id !== slotId));
-        alert("Créneau supprimé avec succès");
+        Swal.fire({
+          icon: 'success',
+          title: 'Supprimé!',
+          text: 'Créneau supprimé avec succès',
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Erreur lors de la suppression',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error deleting slot:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la suppression du créneau',
+        confirmButtonColor: '#1B2688'
+      });
     }
   };
 
@@ -447,7 +523,14 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert(`Rendez-vous ${action === "confirm" ? "confirmé" : "annulé"} avec succès!`);
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: `Rendez-vous ${action === "confirm" ? "confirmé" : "annulé"} avec succès!`,
+          confirmButtonColor: '#1B2688',
+          timer: 2000,
+          showConfirmButton: false
+        });
         
         setAppointments(prev => prev.map(app => 
           app._id === appointmentId 
@@ -455,10 +538,21 @@ const Profile = () => {
             : app
         ));
       } else {
-        alert("Erreur: " + data.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Une erreur s\'est produite',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error(`Error ${action} appointment:`, err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: `Erreur lors de ${action === "confirm" ? "la confirmation" : "l'annulation"} du rendez-vous`,
+        confirmButtonColor: '#1B2688'
+      });
     }
   };
 
@@ -695,7 +789,12 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert("Votre compte a été désactivé avec succès. Vous n'apparaîtrez plus dans la liste des médecins.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Compte désactivé',
+          text: 'Votre compte a été désactivé avec succès. Vous n\'apparaîtrez plus dans la liste des médecins.',
+          confirmButtonColor: '#1B2688'
+        });
         setShowDeactivateModal(false);
         
         // Mettre à jour l'état local
@@ -704,11 +803,21 @@ const Profile = () => {
           isActive: false
         }));
       } else {
-        alert("Erreur: " + (data.message || "Impossible de désactiver le compte"));
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Impossible de désactiver le compte',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error deactivating account:", err);
-      alert("Erreur lors de la désactivation du compte");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la désactivation du compte',
+        confirmButtonColor: '#1B2688'
+      });
     } finally {
       setDeactivating(false);
     }
@@ -730,7 +839,12 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert("Votre compte a été réactivé avec succès. Vous apparaîtrez à nouveau dans la liste des médecins.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Compte réactivé',
+          text: 'Votre compte a été réactivé avec succès. Vous apparaîtrez à nouveau dans la liste des médecins.',
+          confirmButtonColor: '#1B2688'
+        });
         
         // Mettre à jour l'état local
         setUser(prev => ({
@@ -738,11 +852,21 @@ const Profile = () => {
           isActive: true
         }));
       } else {
-        alert("Erreur: " + (data.message || "Impossible de réactiver le compte"));
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: data.message || 'Impossible de réactiver le compte',
+          confirmButtonColor: '#1B2688'
+        });
       }
     } catch (err) {
       console.error("Error reactivating account:", err);
-      alert("Erreur lors de la réactivation du compte");
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Erreur lors de la réactivation du compte',
+        confirmButtonColor: '#1B2688'
+      });
     } finally {
       setDeactivating(false);
     }
