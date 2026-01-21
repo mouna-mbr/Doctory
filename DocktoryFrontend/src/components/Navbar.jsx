@@ -278,7 +278,7 @@ export default function Navbar() {
                                 markAsRead(notification._id);
                               }
                               if (notification.appointmentId) {
-                                window.location.href = '/appointments';
+                                window.location.href = '/my-appointments';
                               }
                             }}
                           >
