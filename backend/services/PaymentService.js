@@ -68,7 +68,7 @@ class PaymentService {
         patientId: appointment.patientId._id,
         doctorId: appointment.doctorId._id,
         amount: appointment.amount,
-        currency: "USD",
+        currency: "DT",
         status: "PENDING",
         paymentMethod: "CARD",
         paymentGateway: "STRIPE",
@@ -90,7 +90,7 @@ class PaymentService {
         sessionId: session.id,
         sessionUrl: session.url, // Retourner l'URL de checkout
         amount: appointment.amount,
-        currency: "USD",
+        currency: "DT",
         };
         
     } catch (error) {
@@ -109,8 +109,12 @@ class PaymentService {
         }
 
         const appointmentId = session.metadata.appointmentId;
-        const appointment = await Appointment.findById(appointmentId);
-        
+        const appointment = await Appointment.findById(appointmentId)
+         .populate('doctorId', 'fullName consultationPrice')  // <-- Ici on récupère fullName
+         .populate('patientId', 'fullName email phoneNumber');
+        const doctor = appointment.doctorId;
+        const patient = appointment.patientId;
+
         if (!appointment) {
         throw new Error('Rendez-vous non trouvé');
         }
@@ -160,7 +164,7 @@ class PaymentService {
         // Envoyer une notification au patient
         await NotificationService.createPaymentSuccessNotification(
             appointment.patientId,
-            appointment.doctorId.fullName,
+            doctor.fullName,
             payment.amount,
             appointmentId
         );
@@ -168,7 +172,7 @@ class PaymentService {
         // Envoyer une notification au docteur
         await NotificationService.createPaymentReceivedNotification(
             appointment.doctorId,
-            appointment.patientId.fullName,
+            patient.fullName,
             payment.amount,
             appointmentId
         );

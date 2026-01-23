@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { FaStethoscope, FaPills, FaHeartbeat, FaSyringe, FaFlask } from "react-icons/fa"
+
 import "../assets/css/TwoFactor.css";
+import logo from '../assets/photos/logobgWhite.png'; 
 
 export default function TwoFactor() {
   const [code, setCode] = useState("");
@@ -80,7 +83,25 @@ export default function TwoFactor() {
 
   return (
     <div className="twofa-page">
+            <div className="medical-icons-bg">
+              <div className="icon-item">
+                <FaStethoscope />
+              </div>
+              <div className="icon-item">
+                <FaPills />
+              </div>
+              <div className="icon-item">
+                <FaHeartbeat />
+              </div>
+              <div className="icon-item">
+                <FaSyringe />
+              </div>
+              <div className="icon-item">
+                <FaFlask />
+              </div>
+            </div>
       <div className="twofa-card">
+        <img src={logo} alt="Docktory Logo" className="twofa-logo" width={50} />
         <h2>Vérification de sécurité</h2>
         <p>
           Un code de vérification a été envoyé à votre adresse email.
