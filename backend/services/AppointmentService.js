@@ -2,11 +2,11 @@ const AppointmentRepository = require("../repositories/AppointmentRepository");
 const UserRepository = require("../repositories/UserRepository");
 const AvailabilityService = require("./AvailabilityService");
 const NotificationService = require("./NotificationService");
-
+const Appointment = require("../models/Appointment");
 class AppointmentService {
   // Patient creates appointment request
   async createAppointment(patientId, appointmentData) {
-    const { doctorId, startDateTime, endDateTime } = appointmentData;
+    const { doctorId, startDateTime, endDateTime, notes, reason } = appointmentData;
 
     // Validate doctor exists and is active
     const doctor = await UserRepository.findById(doctorId);
@@ -67,6 +67,8 @@ class AppointmentService {
       startDateTime: start,
       endDateTime: end,
       status: "REQUESTED",
+      notes,
+      reason
     });
 
     // Create notification for doctor
@@ -86,81 +88,86 @@ class AppointmentService {
 
     return appointment;
   }
-async confirmAppointment(appointmentId, doctorId) {
-  const appointment = await AppointmentRepository.findById(appointmentId);
+  async confirmAppointment(appointmentId, doctorId) {
+    const appointment = await AppointmentRepository.findById(appointmentId);
 
-  if (!appointment) {
-    throw new Error("Rendez-vous introuvable");
-  }
-
-  // S'assurer que les IDs sont en string pour la comparaison
-  if (appointment.doctorId._id.toString() !== doctorId.toString()) {
-    throw new Error("Non autorisé");
-  }
-
-  if (appointment.status !== "REQUESTED") {
-    throw new Error(`Impossible de confirmer un rendez-vous avec le statut: ${appointment.status}`);
-  }
-
-  if (new Date(appointment.startDateTime) <= new Date()) {
-    throw new Error("Impossible de confirmer un rendez-vous passé");
-  }
-
-  const conflicts = await AppointmentRepository.findConflictingAppointments(
-    doctorId,
-    appointment.startDateTime,
-    appointment.endDateTime,
-    appointmentId
-  );
-
-  if (conflicts.length > 0) {
-    throw new Error("Ce créneau n'est plus disponible");
-  }
-
-  // Créer l'ID de salle de vidéo
-  const videoRoomId = `room_${appointmentId}`;
-
-  // Mettre à jour le rendez-vous
-  const updatedAppointment = await Appointment.findByIdAndUpdate(
-    appointmentId,
-    {
-      status: "CONFIRMED",
-      videoRoomId: videoRoomId,
-    },
-    { new: true, runValidators: true }
-  ).populate('doctorId').populate('patientId');
-
-  if (!updatedAppointment) {
-    throw new Error("Erreur lors de la confirmation du rendez-vous");
-  }
-
-  // Formatage de la date pour la notification
-  const formattedDate = new Date(updatedAppointment.startDateTime).toLocaleDateString(
-    "fr-FR",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    if (!appointment) {
+      throw new Error("Rendez-vous introuvable");
     }
-  );
 
-  // Créer la notification
-  await NotificationService.createAppointmentConfirmedNotification(
-    updatedAppointment.patientId._id.toString(),
-    updatedAppointment.doctorId.fullName,
-    appointmentId,
-    formattedDate
-  );
+    if (appointment.doctorId._id.toString() !== doctorId.toString()) {
+      throw new Error("Non autorisé");
+    }
 
-  return {
-    success: true,
-    message: "Rendez-vous confirmé avec succès",
-    appointment: updatedAppointment,
-    videoRoomId: videoRoomId, // Retourner l'ID de la salle
-  };
-}
+    if (appointment.status !== "REQUESTED") {
+      throw new Error(`Impossible de confirmer un rendez-vous avec le statut: ${appointment.status}`);
+    }
+
+    if (new Date(appointment.startDateTime) <= new Date()) {
+      throw new Error("Impossible de confirmer un rendez-vous passé");
+    }
+
+    const conflicts = await AppointmentRepository.findConflictingAppointments(
+      doctorId,
+      appointment.startDateTime,
+      appointment.endDateTime,
+      appointmentId
+    );
+
+    if (conflicts.length > 0) {
+      throw new Error("Ce créneau n'est plus disponible");
+    }
+
+    // Récupérer le prix du docteur
+    const doctor = await UserRepository.findById(doctorId);
+    if (!doctor.consultationPrice || doctor.consultationPrice <= 0) {
+      throw new Error("Le docteur doit définir un prix de consultation avant de confirmer des rendez-vous");
+    }
+
+    // Mettre le statut à CONFIRMED (patient devra payer)
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      {
+        status: "CONFIRMED",
+        amount: doctor.consultationPrice,
+        paymentStatus: "PENDING", // Paiement requis
+      },
+      { new: true, runValidators: true }
+    ).populate('doctorId').populate('patientId');
+
+    if (!updatedAppointment) {
+      throw new Error("Erreur lors de la confirmation du rendez-vous");
+    }
+
+    // Formatage de la date pour la notification
+    const formattedDate = new Date(updatedAppointment.startDateTime).toLocaleDateString(
+      "fr-FR",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
+
+    // Créer la notification de confirmation avec instructions de paiement
+    await NotificationService.createAppointmentConfirmedNotification(
+      updatedAppointment.patientId._id.toString(),
+      updatedAppointment.doctorId.fullName,
+      appointmentId,
+      formattedDate,
+      doctor.consultationPrice
+    );
+
+    return {
+      success: true,
+      message: "Rendez-vous confirmé avec succès. Le patient doit maintenant effectuer le paiement.",
+      appointment: updatedAppointment,
+      requiresPayment: true,
+      amount: doctor.consultationPrice,
+    };
+  }
 
 
 

@@ -149,6 +149,80 @@ class NotificationService {
   async getRecentNotifications(userId, limit = 50) {
     return await NotificationRepository.getRecentNotifications(userId, limit);
   }
+
+  // Dans NotificationService.js - ajoutez ces méthodes
+
+// Create notification for payment success (sent to patient)
+async createPaymentSuccessNotification(patientId, doctorName, amount, appointmentId) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "PAYMENT_SUCCESS",
+    title: "Paiement confirmé",
+    message: `Votre paiement de ${amount} DT pour la consultation avec Dr. ${doctorName} a été confirmé`,
+    appointmentId,
+  });
+
+  // Emit real-time notification
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
+
+// Create notification for payment received (sent to doctor)
+async createPaymentReceivedNotification(doctorId, patientName, amount, appointmentId) {
+  const notification = await NotificationRepository.create({
+    userId: doctorId,
+    type: "PAYMENT_RECEIVED",
+    title: "Paiement reçu",
+    message: `Vous avez reçu ${amount} DT de ${patientName} pour la consultation`,
+    appointmentId,
+  });
+
+  // Emit real-time notification
+  emitNotificationToUser(doctorId, notification);
+  const count = await NotificationRepository.getUnreadCount(doctorId);
+  emitUnreadCountToUser(doctorId, count);
+
+  return notification;
+}
+
+// Create notification for payment failure (sent to patient)
+async createPaymentFailedNotification(patientId, doctorName, amount, appointmentId) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "PAYMENT_FAILED",
+    title: "Échec du paiement",
+    message: `Votre paiement de ${amount} DT pour la consultation avec Dr. ${doctorName} a échoué. Veuillez réessayer.`,
+    appointmentId,
+  });
+
+  // Emit real-time notification
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
+
+// Create notification for payment refund (sent to patient)
+async createPaymentRefundNotification(patientId, doctorName, amount, appointmentId) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "PAYMENT_REFUND",
+    title: "Remboursement effectué",
+    message: `Un remboursement de ${amount} DT pour votre consultation avec Dr. ${doctorName} a été effectué`,
+    appointmentId,
+  });
+
+  // Emit real-time notification
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
 }
 
 module.exports = new NotificationService();

@@ -15,6 +15,11 @@ const notificationSchema = new mongoose.Schema(
         "APPOINTMENT_CANCELLED",
         "APPOINTMENT_COMPLETED",
         "APPOINTMENT_REMINDER",
+        "PAYMENT_SUCCESS",
+        "PAYMENT_RECEIVED",
+        "PAYMENT_FAILED", 
+        "PAYMENT_REFUND",
+        "PAYMENT_PENDING"
       ],
       required: true,
     },

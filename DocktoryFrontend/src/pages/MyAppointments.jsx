@@ -3,7 +3,6 @@ import {
   FaCalendarAlt,
   FaClock,
   FaUserMd,
-  FaMapMarkerAlt,
   FaStethoscope,
   FaCheckCircle,
   FaTimesCircle,
@@ -15,13 +14,21 @@ import {
   FaExternalLinkAlt,
   FaNotesMedical,
   FaUsers,
-  FaCalendarDay
+  FaCalendarDay,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaLock,
+  FaArrowLeft
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "../assets/css/MyAppointments.css";
+import { loadStripe } from "@stripe/stripe-js";
 
 // Import du composant calendrier pour les médecins
 import DoctorCalendar from "./DoctorCalendar";
+
+// Initialiser Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -33,7 +40,10 @@ const MyAppointments = () => {
   const [cancelling, setCancelling] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [isDoctor, setIsDoctor] = useState(false);
-  const [doctorView, setDoctorView] = useState("calendar"); // "calendar" ou "list"
+  const [doctorView, setDoctorView] = useState("calendar");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentAppointment, setSelectedPaymentAppointment] = useState(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   const API_BASE_URL = "http://localhost:5000/api";
 
@@ -44,11 +54,9 @@ const MyAppointments = () => {
       try {
         const user = JSON.parse(userStr);
         console.log("User from localStorage:", user);
-        // Vérifier les deux formats possibles (majuscule/minuscule)
         const role = user.role || user.Role || "";
         setUserRole(role);
         
-        // Vérifier si c'est un médecin (gérer les deux cas de rôle)
         const isDoctorUser = role === "DOCTOR" || role === "doctor" || role === "médecin";
         setIsDoctor(isDoctorUser);
         console.log("User role detected:", role, "isDoctor:", isDoctorUser);
@@ -105,10 +113,8 @@ const MyAppointments = () => {
 
         console.log("Fetching appointments with token...");
         
-        // D'abord tester la connexion API
         await testApiConnection();
 
-        // Utiliser simplement /appointments
         const response = await fetch(`${API_BASE_URL}/appointments`, {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -119,7 +125,6 @@ const MyAppointments = () => {
         console.log("API Response status:", response.status);
         
         if (!response.ok) {
-          // Essayer de récupérer le message d'erreur détaillé
           let errorMessage = `Erreur ${response.status} lors du chargement des rendez-vous`;
           
           try {
@@ -151,7 +156,6 @@ const MyAppointments = () => {
         console.log("Appointments data received:", data);
         
         if (data.success) {
-          // Trier par date (du plus récent au plus ancien)
           const appointmentsData = data.data || [];
           console.log("Appointments count:", appointmentsData.length);
           
@@ -173,9 +177,9 @@ const MyAppointments = () => {
     };
 
     fetchAppointments();
-  }, []); // Retirer isDoctor de la dépendance pour éviter les appels multiples
+  }, []);
 
-  // Filtrer les rendez-vous (pour la vue liste)
+  // Filtrer les rendez-vous
   const filteredAppointments = appointments.filter(appointment => {
     const now = new Date();
     const appointmentDate = new Date(appointment.startDateTime);
@@ -279,9 +283,50 @@ const MyAppointments = () => {
     }
   };
 
+  // Obtenir le statut de paiement avec icône
+  const getPaymentStatusInfo = (paymentStatus) => {
+    switch (paymentStatus) {
+      case "PAID":
+        return {
+          text: "Payé",
+          icon: <FaCheckCircle />,
+          color: "#27ae60",
+          bgColor: "#eafaf1"
+        };
+      case "PENDING":
+        return {
+          text: "En attente",
+          icon: <FaHourglassHalf />,
+          color: "#f39c12",
+          bgColor: "#fef5e6"
+        };
+      case "FAILED":
+        return {
+          text: "Échoué",
+          icon: <FaTimesCircle />,
+          color: "#e74c3c",
+          bgColor: "#fdedec"
+        };
+      case "REFUNDED":
+        return {
+          text: "Remboursé",
+          icon: <FaMoneyBillWave />,
+          color: "#3498db",
+          bgColor: "#eaf2f8"
+        };
+      default:
+        return {
+          text: "Non payé",
+          icon: <FaTimesCircle />,
+          color: "#7f8c8d",
+          bgColor: "#f4f6f6"
+        };
+    }
+  };
+
   // Fonction pour consulter le profil
   const viewProfile = (userId) => {
-      window.location.href = `/profile/${userId}`;
+    window.location.href = `/profile/${userId}`;
   };
 
   // Annuler un rendez-vous
@@ -306,14 +351,12 @@ const MyAppointments = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Mettre à jour la liste des rendez-vous
         setAppointments(prev => prev.map(app => 
           app._id === appointmentId ? { ...app, status: "CANCELLED" } : app
         ));
         setShowCancelModal(false);
         setSelectedAppointment(null);
         
-        // Afficher un message de succès
         Swal.fire({
           icon: 'success',
           title: 'Rendez-vous annulé',
@@ -357,14 +400,18 @@ const MyAppointments = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Mettre à jour la liste des rendez-vous
         setAppointments(prev => prev.map(app => 
-          app._id === appointmentId ? { ...app, status: "CONFIRMED" } : app
+          app._id === appointmentId ? { 
+            ...app, 
+            status: "CONFIRMED",
+            amount: data.amount || app.amount,
+            paymentStatus: "PENDING"
+          } : app
         ));
         Swal.fire({
           icon: 'success',
           title: 'Rendez-vous confirmé',
-          text: 'Le rendez-vous a été confirmé avec succès.',
+          text: data.message || 'Le rendez-vous a été confirmé avec succès. Le patient doit maintenant effectuer le paiement.',
           confirmButtonColor: '#27ae60',
           timer: 3000
         });
@@ -402,7 +449,6 @@ const MyAppointments = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Mettre à jour la liste des rendez-vous
         setAppointments(prev => prev.map(app => 
           app._id === appointmentId ? { ...app, status: "COMPLETED" } : app
         ));
@@ -433,6 +479,12 @@ const MyAppointments = () => {
     setShowCancelModal(true);
   };
 
+  // Ouvrir la modal de paiement
+  const openPaymentModal = (appointment) => {
+    setSelectedPaymentAppointment(appointment);
+    setShowPaymentModal(true);
+  };
+
   // Vérifier si un rendez-vous peut être annulé
   const canCancelAppointment = (appointment) => {
     try {
@@ -444,6 +496,220 @@ const MyAppointments = () => {
              (appointment.status === "CONFIRMED" && hoursDifference > 24);
     } catch (error) {
       return false;
+    }
+  };
+
+  // Vérifier si le paiement est requis
+  const requiresPayment = (appointment) => {
+    return appointment.status === "CONFIRMED" && 
+           appointment.paymentStatus !== "PAID" &&
+           new Date(appointment.startDateTime) > new Date();
+  };
+
+  // Fonction pour rejoindre la consultation avec vérification de paiement
+  const handleJoinConsultation = async (appointment) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Vérifier l'accès à la salle
+      const response = await fetch(`${API_BASE_URL}/appointments/room/${appointment.videoRoomId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.allowed) {
+        window.location.href = `/video/${appointment.videoRoomId}`;
+      } else {
+        // Si le paiement est requis
+        if (data.requiresPayment) {
+          Swal.fire({
+            title: 'Paiement requis',
+            html: `
+              <p>Vous devez effectuer le paiement avant d'accéder à la consultation.</p>
+              <p><strong>Montant:</strong> ${data.amount} DT</p>
+              <p><strong>Statut:</strong> ${data.paymentStatus || "Non payé"}</p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Procéder au paiement',
+            cancelButtonText: 'Plus tard',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Ouvrir la modal de paiement
+              openPaymentModal(appointment);
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Accès refusé',
+            text: data.message || 'Vous ne pouvez pas accéder à cette consultation.',
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error checking room access:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur',
+        text: 'Impossible de vérifier l\'accès à la consultation.',
+      });
+    }
+  };
+
+  // Effectuer un paiement par carte
+  const handleCardPayment = async () => {
+    try {
+      setPaymentProcessing(true);
+      const token = localStorage.getItem("token");
+      
+      // Créer la session Stripe
+      const response = await fetch(`${API_BASE_URL}/payments/stripe/${selectedPaymentAppointment._id}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Nouvelle méthode: utiliser window.location pour la redirection
+        if (data.data.sessionUrl) {
+          // Si le backend renvoie une URL directe
+          window.location.href = data.data.sessionUrl;
+        } else if (data.data.sessionId) {
+          // Sinon construire l'URL de checkout Stripe
+          const stripe = await stripePromise;
+          
+          // Nouvelle méthode avec redirectToCheckout
+          const { error } = await stripe.redirectToCheckout({
+            sessionId: data.data.sessionId,
+          });
+
+          if (error) {
+            // Fallback: redirection manuelle
+            window.location.href = `https://checkout.stripe.com/c/pay/${data.data.sessionId}`;
+          }
+        } else {
+          throw new Error("Aucune information de session reçue");
+        }
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Error initiating card payment:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: error.message,
+      });
+      setPaymentProcessing(false);
+    }
+  };
+  // Effectuer un paiement mobile money
+  const handleMobileMoneyPayment = async (provider) => {
+    try {
+      setPaymentProcessing(true);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/payments/mobile-money/${selectedPaymentAppointment._id}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ provider }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.fire({
+          icon: "info",
+          title: "Instructions de paiement",
+          html: `
+            <div style="text-align: left;">
+              <p><strong>Montant:</strong> ${data.data.amount} DT</p>
+              <p><strong>Instructions:</strong></p>
+              <p>${data.data.instructions}</p>
+              <p>Après avoir effectué le paiement, cliquez sur le bouton ci-dessous pour vérifier.</p>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: "J'ai payé, vérifier",
+          cancelButtonText: "Annuler",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            verifyPayment(data.data.paymentId);
+          }
+        });
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Error initiating mobile money payment:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: error.message,
+      });
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  // Vérifier le paiement
+  const verifyPayment = async (paymentId) => {
+    try {
+      setPaymentProcessing(true);
+      
+      setTimeout(async () => {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/payments/status/${selectedPaymentAppointment._id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data.appointment.paymentStatus === "PAID") {
+            setAppointments(prev => prev.map(app => 
+              app._id === selectedPaymentAppointment._id ? { 
+                ...app, 
+                paymentStatus: "PAID" 
+              } : app
+            ));
+            
+            setShowPaymentModal(false);
+            setSelectedPaymentAppointment(null);
+            
+            Swal.fire({
+              icon: "success",
+              title: "Paiement confirmé!",
+              text: "Votre paiement a été confirmé avec succès.",
+              confirmButtonText: "Accéder à la consultation",
+            }).then(() => {
+              window.location.href = `/video/${data.data.appointment.videoRoomId}`;
+            });
+          } else {
+            Swal.fire({
+              icon: "warning",
+              title: "Paiement en attente",
+              text: "Votre paiement n'a pas encore été confirmé. Veuillez réessayer dans quelques minutes.",
+            });
+          }
+        }
+        setPaymentProcessing(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      setPaymentProcessing(false);
     }
   };
 
@@ -462,11 +728,12 @@ const MyAppointments = () => {
       requested: appointments.filter(a => a.status === "REQUESTED").length,
       confirmed: appointments.filter(a => a.status === "CONFIRMED").length,
       cancelled: appointments.filter(a => a.status === "CANCELLED").length,
-      completed: appointments.filter(a => a.status === "COMPLETED").length
+      completed: appointments.filter(a => a.status === "COMPLETED").length,
+      pendingPayment: appointments.filter(a => requiresPayment(a)).length
     };
   };
 
-  // Déterminer si l'utilisateur est un médecin (pour l'affichage)
+  // Déterminer si l'utilisateur est un médecin
   const checkIsDoctor = () => {
     return userRole === "DOCTOR" || userRole === "doctor" || isDoctor;
   };
@@ -668,9 +935,9 @@ const MyAppointments = () => {
               <div className="appointments-list">
                 {filteredAppointments.map((appointment) => {
                   const statusInfo = getStatusInfo(appointment.status);
+                  const paymentStatusInfo = getPaymentStatusInfo(appointment.paymentStatus);
                   const isUpcoming = new Date(appointment.startDateTime) > new Date();
                   
-                  // Récupérer les informations du patient
                   const patientInfo = appointment.patientId || {};
                   const patientName = patientInfo.fullName || patientInfo.name || patientInfo.username || "Patient";
                   
@@ -684,12 +951,23 @@ const MyAppointments = () => {
                           <FaCalendarAlt />
                           <span>{formatDate(appointment.startDateTime)}</span>
                         </div>
-                        <div className="appointment-status" style={{ 
-                          color: statusInfo.color,
-                          backgroundColor: statusInfo.bgColor
-                        }}>
-                          {statusInfo.icon}
-                          <span>{statusInfo.text}</span>
+                        <div className="status-container">
+                          <div className="appointment-status" style={{ 
+                            color: statusInfo.color,
+                            backgroundColor: statusInfo.bgColor
+                          }}>
+                            {statusInfo.icon}
+                            <span>{statusInfo.text}</span>
+                          </div>
+                          {appointment.status === "CONFIRMED" && (
+                            <div className="payment-status" style={{ 
+                              color: paymentStatusInfo.color,
+                              backgroundColor: paymentStatusInfo.bgColor
+                            }}>
+                              {paymentStatusInfo.icon}
+                              <span>{paymentStatusInfo.text}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -717,20 +995,20 @@ const MyAppointments = () => {
                               </div>
                             </div>
                             
+                            {appointment.amount && (
+                              <div className="info-item">
+                                <FaMoneyBillWave />
+                                <span>
+                                  <strong>Montant :</strong> {appointment.amount} DT
+                                </span>
+                              </div>
+                            )}
+                            
                             {appointment.reason && (
                               <div className="info-item">
                                 <FaNotesMedical />
                                 <span>
                                   <strong>Raison :</strong> {appointment.reason}
-                                </span>
-                              </div>
-                            )}
-                            
-                            {appointment.notes && (
-                              <div className="info-item">
-                                <FaInfoCircle />
-                                <span>
-                                  <strong>Notes :</strong> {appointment.notes}
                                 </span>
                               </div>
                             )}
@@ -755,21 +1033,21 @@ const MyAppointments = () => {
                             </div>
                           )}
                           
-                          {appointment.status === "CONFIRMED" && isUpcoming  && (
+                          {appointment.status === "CONFIRMED" && isUpcoming && (
                             <>
-                            <button
-                              className="join-btn"
-                              onClick={() => window.location.href = `/video/${appointment.videoRoomId}`}
-                            >
-                              <FaExternalLinkAlt /> Rejoindre la consultation
-                            </button>
+                              <button
+                                className="join-btn"
+                                onClick={() => handleJoinConsultation(appointment)}
+                              >
+                                <FaExternalLinkAlt /> Rejoindre la consultation
+                              </button>
 
-                            <button 
-                              className="complete-btn"
-                              onClick={() => handleCompleteAppointment(appointment._id)}
-                            >
-                              <FaCalendarCheck /> Marquer comme terminé
-                            </button>
+                              <button 
+                                className="complete-btn"
+                                onClick={() => handleCompleteAppointment(appointment._id)}
+                              >
+                                <FaCalendarCheck /> Marquer comme terminé
+                              </button>
                             </>
                           )}
                           
@@ -864,6 +1142,16 @@ const MyAppointments = () => {
         </div>
 
         <div className="stat-card">
+          <div className="stat-icon pending-payment">
+            <FaMoneyBillWave />
+          </div>
+          <div className="stat-info">
+            <h3>Paiement en attente</h3>
+            <p className="stat-number">{stats.pendingPayment}</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
           <div className="stat-icon completed">
             <FaCalendarCheck />
           </div>
@@ -953,14 +1241,14 @@ const MyAppointments = () => {
         <div className="appointments-list">
           {filteredAppointments.map((appointment) => {
             const statusInfo = getStatusInfo(appointment.status);
+            const paymentStatusInfo = getPaymentStatusInfo(appointment.paymentStatus);
             const isUpcoming = new Date(appointment.startDateTime) > new Date();
             const canCancel = canCancelAppointment(appointment);
+            const needsPayment = requiresPayment(appointment);
             
-            // Récupérer les informations du médecin si disponibles
             const doctorInfo = appointment.doctorId || {};
             const doctorName = doctorInfo.fullName || doctorInfo.name || doctorInfo.username || "Médecin";
             const doctorSpecialty = doctorInfo.specialty || "Non spécifié";
-            const doctorLocation = doctorInfo.location || doctorInfo.city || "Non spécifié";
             
             return (
               <div 
@@ -972,12 +1260,23 @@ const MyAppointments = () => {
                     <FaCalendarAlt />
                     <span>{formatDate(appointment.startDateTime)}</span>
                   </div>
-                  <div className="appointment-status" style={{ 
-                    color: statusInfo.color,
-                    backgroundColor: statusInfo.bgColor
-                  }}>
-                    {statusInfo.icon}
-                    <span>{statusInfo.text}</span>
+                  <div className="status-container">
+                    <div className="appointment-status" style={{ 
+                      color: statusInfo.color,
+                      backgroundColor: statusInfo.bgColor
+                    }}>
+                      {statusInfo.icon}
+                      <span>{statusInfo.text}</span>
+                    </div>
+                    {appointment.status === "CONFIRMED" && (
+                      <div className="payment-status" style={{ 
+                        color: paymentStatusInfo.color,
+                        backgroundColor: paymentStatusInfo.bgColor
+                      }}>
+                        {paymentStatusInfo.icon}
+                        <span>{paymentStatusInfo.text}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -988,15 +1287,12 @@ const MyAppointments = () => {
                         <FaUserMd />
                         <div className="doctor-details">
                           <span><strong>Médecin :</strong> Dr. {doctorName} </span>
-                          <a 
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              viewProfile(appointment.doctorId?._id || appointment.doctorId, doctorName, "doctor");
-                            }}
+                          <button 
+                            className="view-profile-btn"
+                            onClick={() => viewProfile(appointment.doctorId?._id || appointment.doctorId)}
                           >
-                            <FaExternalLinkAlt />
-                          </a>
+                            <FaExternalLinkAlt /> Voir profil
+                          </button>
                         </div>
                       </div>
                       <div className="info-item">
@@ -1014,20 +1310,20 @@ const MyAppointments = () => {
                         </span>
                       </div>
                       
+                      {appointment.amount && (
+                        <div className="info-item">
+                          <FaMoneyBillWave />
+                          <span>
+                            <strong>Montant :</strong> {appointment.amount} DT
+                          </span>
+                        </div>
+                      )}
+                      
                       {appointment.reason && (
                         <div className="info-item">
                           <FaNotesMedical />
                           <span>
                             <strong>Raison :</strong> {appointment.reason}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {appointment.notes && (
-                        <div className="info-item">
-                          <FaInfoCircle />
-                          <span>
-                            <strong>Notes :</strong> {appointment.notes}
                           </span>
                         </div>
                       )}
@@ -1040,6 +1336,24 @@ const MyAppointments = () => {
                         <FaInfoCircle />
                         <small>En attente de confirmation par le médecin</small>
                       </div>
+                    )}
+                    
+                    {needsPayment && (
+                      <button 
+                        className="pay-btn"
+                        onClick={() => openPaymentModal(appointment)}
+                      >
+                        <FaCreditCard /> Payer maintenant
+                      </button>
+                    )}
+                    
+                    {appointment.status === "CONFIRMED" && appointment.paymentStatus === "PAID" && isUpcoming && (
+                      <button
+                        className="join-btn"
+                        onClick={() => handleJoinConsultation(appointment)}
+                      >
+                        <FaExternalLinkAlt /> Rejoindre la consultation
+                      </button>
                     )}
                     
                     {canCancel && isUpcoming && appointment.status !== "CANCELLED" && appointment.status !== "COMPLETED" && (
@@ -1127,6 +1441,95 @@ const MyAppointments = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de paiement */}
+      {showPaymentModal && selectedPaymentAppointment && (
+        <div className="modal-overlay">
+          <div className="modal-content payment-modal">
+            <div className="payment-modal-header">
+              <button 
+                className="back-button"
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setSelectedPaymentAppointment(null);
+                }}
+              >
+                <FaArrowLeft /> Retour
+              </button>
+              <h3><FaLock /> Paiement de la consultation</h3>
+            </div>
+            
+            <div className="payment-summary">
+              <h4>Résumé du paiement</h4>
+              <div className="summary-details">
+                <div className="summary-item">
+                  <span>Médecin:</span>
+                  <span>Dr. {selectedPaymentAppointment.doctorId?.fullName}</span>
+                </div>
+                <div className="summary-item">
+                  <span>Date:</span>
+                  <span>{formatDate(selectedPaymentAppointment.startDateTime)}</span>
+                </div>
+                <div className="summary-item">
+                  <span>Heure:</span>
+                  <span>{formatTime(selectedPaymentAppointment.startDateTime)}</span>
+                </div>
+                <div className="summary-item">
+                  <span>Durée:</span>
+                  <span>{calculateDuration(selectedPaymentAppointment.startDateTime, selectedPaymentAppointment.endDateTime)}</span>
+                </div>
+                <div className="summary-item total">
+                  <span>Montant à payer:</span>
+                  <span className="amount">{selectedPaymentAppointment.amount} DT</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="payment-methods">
+              <h4>Méthode de paiement</h4>
+              <div className="method-options">
+                <button 
+                  className="method-option"
+                  onClick={handleCardPayment}
+                  disabled={paymentProcessing}
+                >
+                  <FaCreditCard />
+                  <span>Carte bancaire</span>
+                  <small>Visa, Mastercard</small>
+                </button>
+                <button 
+                  className="method-option"
+                  onClick={() => handleMobileMoneyPayment("orange")}
+                  disabled={paymentProcessing}
+                >
+                  <FaMoneyBillWave />
+                  <span>Orange Money</span>
+                  <small>Paiement mobile</small>
+                </button>
+                <button 
+                  className="method-option"
+                  onClick={() => handleMobileMoneyPayment("mtn")}
+                  disabled={paymentProcessing}
+                >
+                  <FaMoneyBillWave />
+                  <span>MTN Mobile Money</span>
+                  <small>Paiement mobile</small>
+                </button>
+              </div>
+            </div>
+            
+            <div className="payment-security">
+              <p><FaLock /> Paiement sécurisé par cryptage SSL</p>
+              {paymentProcessing && (
+                <div className="processing-payment">
+                  <span className="spinner-small"></span>
+                  <span>Traitement du paiement en cours...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

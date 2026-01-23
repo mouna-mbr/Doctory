@@ -1,3 +1,207 @@
+/* ===== Overlay ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* ===== Modal Container ===== */
+.payment-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.3s ease;
+}
+
+/* ===== Header ===== */
+.payment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.payment-modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== Back Button ===== */
+.back-button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}
+
+/* ===== Payment Summary ===== */
+.payment-summary {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.payment-summary h4 {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #374151;
+}
+
+.summary-item.total {
+  padding-top: 10px;
+  border-top: 1px dashed #d1d5db;
+  font-weight: 600;
+}
+
+.summary-item .amount {
+  color: #16a34a;
+  font-size: 16px;
+}
+
+/* ===== Payment Methods ===== */
+.payment-methods h4 {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+.method-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.method-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-option svg {
+  font-size: 22px;
+  color: #2563eb;
+}
+
+.method-option span {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.method-option small {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.method-option:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.method-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Security Section ===== */
+.payment-security {
+  margin-top: 18px;
+  font-size: 13px;
+  color: #4b5563;
+  text-align: center;
+}
+
+.payment-security p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ===== Processing Spinner ===== */
+.processing-payment {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ===== Animations ===== */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .payment-modal {
+    padding: 16px;
+    margin: 0 10px;
+  }
+}
 
 /* Container principal */
 .join-btn {

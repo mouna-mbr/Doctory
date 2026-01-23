@@ -82,6 +82,7 @@ router.post("/:id/complete", (req, res) => {
   AppointmentController.completeAppointment(req, res);
 });
 // Dans AppointmentRoutes.js
+// Dans AppointmentRoutes.js - Modifier la route /room/:roomId
 router.get("/room/:roomId", async (req, res) => {
   try {
     console.log(`[AppointmentRoutes] Checking access to room: ${req.params.roomId}`);
@@ -100,10 +101,6 @@ router.get("/room/:roomId", async (req, res) => {
 
     const userId = req.user.userId;
     
-    console.log(`[AppointmentRoutes] Doctor ID: ${appointment.doctorId._id}`);
-    console.log(`[AppointmentRoutes] Patient ID: ${appointment.patientId._id}`);
-    console.log(`[AppointmentRoutes] Current User ID: ${userId}`);
-
     // Vérifier l'accès en comparant les IDs en string
     if (
       appointment.doctorId._id.toString() !== userId.toString() &&
@@ -115,11 +112,28 @@ router.get("/room/:roomId", async (req, res) => {
       });
     }
 
-    // Vérifier aussi le statut du rendez-vous
+    // Vérifier le statut du rendez-vous
     if (appointment.status !== "CONFIRMED" && appointment.status !== "COMPLETED") {
       return res.status(403).json({
         message: `La consultation n'est pas disponible (statut: ${appointment.status})`
       });
+    }
+
+    // VÉRIFIER LE PAIEMENT (NOUVEAU)
+    if (appointment.paymentStatus !== "PAID") {
+      // Si c'est le docteur, il peut accéder sans paiement
+      if (appointment.doctorId._id.toString() === userId.toString()) {
+        console.log(`[AppointmentRoutes] Doctor access granted without payment check`);
+      } else {
+        // Si c'est le patient, vérifier le paiement
+        return res.status(403).json({
+          message: "Paiement requis pour accéder à la consultation",
+          requiresPayment: true,
+          appointmentId: appointment._id,
+          amount: appointment.amount,
+          paymentStatus: appointment.paymentStatus
+        });
+      }
     }
 
     // Vérifier l'horaire

@@ -50,7 +50,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/contact", require("./routes/contact"));
-
+app.use("/api/payments", require("./routes/paymentRoutes"));
 console.log("Routes mounted successfully");
 
 // Route de debug pour voir toutes les routes montées
