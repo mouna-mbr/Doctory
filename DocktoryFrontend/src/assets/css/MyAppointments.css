@@ -167,7 +167,60 @@
   justify-content: center;
   gap: 8px;
 }
+.view-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: rgba(27, 38, 136, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(27, 38, 136, 0.2);
+}
 
+.view-profile-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.view-profile-btn:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.view-profile-btn:hover {
+  background: rgba(27, 38, 136, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(27, 38, 136, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.view-profile-btn i {
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
 .spinner-small {
   width: 18px;
   height: 18px;
@@ -712,6 +765,55 @@
   }
 }
 
+.pay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background-color: #fff;
+  color: #28a745;
+  border: 2px solid #28a745;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pay-btn:hover {
+  background-color: #28a745;
+  color: white;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  transform: translateY(-1px);
+}
+
+.pay-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+}
+
+.pay-btn i {
+  font-size: 16px;
+}
+
+/* Version avec montant en vedette */
+.pay-btn.highlight {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  font-weight: 700;
+}
+
+.pay-btn.highlight .price {
+  font-size: 24px;
+  font-weight: 800;
+  margin-left: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 .modal-content h3 {
   color: #e74c3c;
   margin-bottom: 1rem;

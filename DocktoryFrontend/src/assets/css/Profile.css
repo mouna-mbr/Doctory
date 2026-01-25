@@ -184,7 +184,7 @@ color: #fff;
 }
 
 /* Buttons */
-.btn-primary {
+.btn-primaryy {
   background: #1B2688;
   color: white;
   border: none;
@@ -195,7 +195,7 @@ color: #fff;
   transition: all 0.3s;
 }
 
-.btn-primary:hover {
+.btn-primaryy:hover {
   background: #2a38b0;
   transform: translateY(-2px);
 }
@@ -874,4 +874,125 @@ color: #fff;
 
 .modal-actions .btn-danger {
   max-width: none;
+}
+/* Contrôles de tri et filtre */
+.filter-sort-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid #e9ecef;
+}
+
+.filter-group,
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-label,
+.sort-label {
+  font-weight: 600;
+  color: #495057;
+  min-width: 100px;
+}
+
+.filter-buttons,
+.sort-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-btn,
+.sort-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-btn:hover,
+.sort-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.filter-btn.active,
+.sort-btn.active {
+  background: #1B2688;
+  color: white;
+  border-color: #1B2688;
+}
+
+.filter-icon {
+  color: #6c757d;
+}
+
+/* Badges de date */
+.appointment-date-badge,
+.slot-date-badge {
+  margin-top: 0.5rem;
+}
+
+.badge-today,
+.badge-past,
+.badge-future {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.badge-today {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+}
+
+.badge-past {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c2c7;
+}
+
+.badge-future {
+  background: #cff4fc;
+  color: #055160;
+  border: 1px solid #b6effb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-sort-controls {
+    padding: 1rem;
+  }
+  
+  .filter-group,
+  .sort-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .filter-buttons,
+  .sort-buttons {
+    width: 100%;
+  }
+  
+  .filter-btn,
+  .sort-btn {
+    flex: 1;
+    justify-content: center;
+  }
 }

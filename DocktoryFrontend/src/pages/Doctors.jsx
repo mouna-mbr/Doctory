@@ -532,7 +532,7 @@ const Doctors = () => {
                     {doctor.description}
                   </p>
 
-                  <div className="doctor-actions">
+                  <div className="doctor-actionss">
                     <a href={`/profile/${doctor.id}`} className="profile-btn">
                       Voir le profil
                     </a>

@@ -986,12 +986,7 @@ const MyAppointments = () => {
                               <FaUsers />
                               <div className="patient-details">
                                 <span><strong>Patient :</strong> {patientName}</span>
-                                <button 
-                                  className="view-profile-btn"  
-                                  onClick={() => viewProfile(patientInfo._id)}
-                                >
-                                  <FaExternalLinkAlt /> Voir profil 
-                                </button>
+
                               </div>
                             </div>
                             
@@ -1068,11 +1063,22 @@ const MyAppointments = () => {
                       </div>
                       
                       {appointment.createdAt && (
-                        <div className="appointment-footer">
+                        <> 
+                                                         <button 
+                                  className="view-profile-btn"  
+                                  onClick={() => viewProfile(patientInfo._id)}
+                                >
+                                  <FaExternalLinkAlt /> Voir profil 
+                                </button>
+                        <div className="appointment-footer" >
+
+
+
                           <small>
                             Rendez-vous créé le {formatDate(appointment.createdAt)} à {formatTime(appointment.createdAt)}
                           </small>
                         </div>
+                        </>
                       )}
                     </div>
                   );
@@ -1287,12 +1293,7 @@ const MyAppointments = () => {
                         <FaUserMd />
                         <div className="doctor-details">
                           <span><strong>Médecin :</strong> Dr. {doctorName} </span>
-                          <button 
-                            className="view-profile-btn"
-                            onClick={() => viewProfile(appointment.doctorId?._id || appointment.doctorId)}
-                          >
-                            <FaExternalLinkAlt /> Voir profil
-                          </button>
+                         
                         </div>
                       </div>
                       <div className="info-item">
@@ -1385,11 +1386,19 @@ const MyAppointments = () => {
                 </div>
                 
                 {appointment.createdAt && (
+                  <>
+                   <button 
+                            className="view-profile-btn"
+                            onClick={() => viewProfile(appointment.doctorId?._id || appointment.doctorId)}
+                          >
+                            <FaExternalLinkAlt /> Voir profil
+                          </button>
                   <div className="appointment-footer">
                     <small>
                       Rendez-vous créé le {formatDate(appointment.createdAt)} à {formatTime(appointment.createdAt)}
                     </small>
                   </div>
+                  </>
                 )}
               </div>
             );

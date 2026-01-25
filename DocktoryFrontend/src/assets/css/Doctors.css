@@ -57,6 +57,7 @@
 
 .doctor-info-list h3 {
   color: #01052c;
+  margin-top: 25px;
   font-size: 20px;
 }
 
@@ -374,7 +375,7 @@
           padding: 0 10px;
         }
         
-        .doctor-actions {
+        .doctor-actionss {
           display: flex;
           gap: 10px;
           margin: 15px 0;
@@ -382,7 +383,7 @@
         }
         
         .appointment-btn {
-          max-height: 41px;
+          max-height: 59px;
           flex: 1;
           background: #1B2688;
           color: white;
@@ -507,7 +508,7 @@
             justify-content: center;
           }
           
-          .doctor-actions {
+          .doctor-actionss {
             flex-direction: column;
           }
           

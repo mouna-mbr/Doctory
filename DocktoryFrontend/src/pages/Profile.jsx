@@ -1,6 +1,6 @@
 "use client"
-import { useState, useEffect } from "react"
-import { FaCalendarAlt, FaClock, FaCalendarPlus, FaCalendarCheck, FaCalendarTimes, FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa"
+import { useState, useEffect, useMemo } from "react"
+import { FaCalendarAlt, FaClock, FaCalendarPlus, FaCalendarCheck, FaCalendarTimes, FaArrowLeft, FaArrowRight, FaStar, FaRegStar, FaStarHalfAlt, FaSort, FaSortUp, FaSortDown, FaFilter } from "react-icons/fa"
 import Swal from "sweetalert2"
 import "../assets/css/Profile.css"
 
@@ -18,16 +18,16 @@ const Profile = () => {
   });
 
   // États pour les avis REÇUS
-  const [receivedReviews, setReceivedReviews] = useState([]); // Avis que les autres ont donnés sur moi
+  const [receivedReviews, setReceivedReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsError, setReviewsError] = useState(null);
   const [receivedReviewsPage, setReceivedReviewsPage] = useState(1);
   const [reviewsPerPage, setReviewsPerPage] = useState(5);
 
   // États pour les réponses aux avis
-  const [responseTexts, setResponseTexts] = useState({}); // {reviewId: "texte"}
-  const [respondingTo, setRespondingTo] = useState(null); // ID de l'avis en cours de réponse
-  const [responseLoading, setResponseLoading] = useState({}); // {reviewId: true/false}
+  const [responseTexts, setResponseTexts] = useState({});
+  const [respondingTo, setRespondingTo] = useState(null);
+  const [responseLoading, setResponseLoading] = useState({});
 
   // États pour la pagination des rendez-vous
   const [appointmentsPage, setAppointmentsPage] = useState(1);
@@ -40,6 +40,12 @@ const Profile = () => {
   // États pour la gestion du compte
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+
+  // États pour les tris
+  const [appointmentSort, setAppointmentSort] = useState("newest"); // "newest", "oldest"
+  const [appointmentFilter, setAppointmentFilter] = useState("all"); // "all", "today", "past", "future"
+  const [availabilitySort, setAvailabilitySort] = useState("newest"); // "newest", "oldest"
+  const [availabilityFilter, setAvailabilityFilter] = useState("all"); // "all", "today", "past", "future"
 
   const API_BASE_URL = "http://localhost:5000/api";
 
@@ -86,9 +92,112 @@ const Profile = () => {
     fetchUserProfile();
   }, []);
 
+  // Fonction pour obtenir la date d'un rendez-vous
+  const getAppointmentDate = (appointment) => {
+    return appointment.startDateTime || appointment.date || "";
+  };
+
+  // Fonction pour obtenir la date d'une disponibilité
+  const getAvailabilityDate = (slot) => {
+    return slot.date || slot.startDateTime || "";
+  };
+
+  // Fonction pour déterminer si une date est aujourd'hui
+  const isToday = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const today = new Date();
+    
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
+  // Fonction pour déterminer si une date est dans le passé
+  const isPast = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // Pour les rendez-vous, on compare avec l'heure actuelle
+    // Pour les disponibilités, on compare juste la date
+    if (dateString.includes('T')) {
+      // C'est une date/heure complète
+      return date < now;
+    } else {
+      // C'est juste une date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const slotDate = new Date(dateString);
+      slotDate.setHours(0, 0, 0, 0);
+      return slotDate < today;
+    }
+  };
+
+  // Fonction pour déterminer si une date est dans le futur
+  const isFuture = (dateString) => {
+    if (!dateString) return false;
+    return !isToday(dateString) && !isPast(dateString);
+  };
+
+  // Rendez-vous triés et filtrés
+  const sortedAndFilteredAppointments = useMemo(() => {
+    let filtered = [...appointments];
+    
+    // Appliquer le filtre
+    if (appointmentFilter === "today") {
+      filtered = filtered.filter(app => isToday(getAppointmentDate(app)));
+    } else if (appointmentFilter === "past") {
+      filtered = filtered.filter(app => isPast(getAppointmentDate(app)));
+    } else if (appointmentFilter === "future") {
+      filtered = filtered.filter(app => isFuture(getAppointmentDate(app)));
+    }
+    
+    // Appliquer le tri
+    filtered.sort((a, b) => {
+      const dateA = new Date(getAppointmentDate(a) || 0);
+      const dateB = new Date(getAppointmentDate(b) || 0);
+      
+      if (appointmentSort === "newest") {
+        return dateB - dateA; // Le plus récent en premier
+      } else {
+        return dateA - dateB; // Le plus ancien en premier
+      }
+    });
+    
+    return filtered;
+  }, [appointments, appointmentSort, appointmentFilter]);
+
+  // Disponibilités triées et filtrées
+  const sortedAndFilteredAvailability = useMemo(() => {
+    let filtered = [...availability];
+    
+    // Appliquer le filtre
+    if (availabilityFilter === "today") {
+      filtered = filtered.filter(slot => isToday(getAvailabilityDate(slot)));
+    } else if (availabilityFilter === "past") {
+      filtered = filtered.filter(slot => isPast(getAvailabilityDate(slot)));
+    } else if (availabilityFilter === "future") {
+      filtered = filtered.filter(slot => isFuture(getAvailabilityDate(slot)));
+    }
+    
+    // Appliquer le tri
+    filtered.sort((a, b) => {
+      const dateA = new Date(getAvailabilityDate(a) || 0);
+      const dateB = new Date(getAvailabilityDate(b) || 0);
+      
+      if (availabilitySort === "newest") {
+        return dateB - dateA; // Le plus récent en premier
+      } else {
+        return dateA - dateB; // Le plus ancien en premier
+      }
+    });
+    
+    return filtered;
+  }, [availability, availabilitySort, availabilityFilter]);
+
   // Fonction pour récupérer les avis que les autres ont donnés SUR MOI (avis reçus)
   const fetchReceivedReviews = async () => {
-    // Vérifier que user existe avant de continuer
     if (!user) {
       console.error("User is null, cannot fetch reviews");
       setReviewsError("Utilisateur non chargé");
@@ -128,10 +237,8 @@ const Profile = () => {
         const reviewsAboutMe = data.data.filter(review => {
           const targetId = review.targetId;
           
-          // Vérifier si l'avis est destiné à MOI (je suis la cible)
           if (!targetId) return false;
           
-          // Si targetId est un objet
           if (typeof targetId === 'object') {
             const isAboutMe = targetId._id === userId || targetId.id === userId;
             if (isAboutMe) {
@@ -140,7 +247,6 @@ const Profile = () => {
             return isAboutMe;
           }
           
-          // Si targetId est une string
           if (typeof targetId === 'string') {
             const isAboutMe = targetId === userId;
             if (isAboutMe) {
@@ -158,7 +264,6 @@ const Profile = () => {
           console.log("Reviews ABOUT ME found:", reviewsAboutMe);
           setReceivedReviews(reviewsAboutMe);
           
-          // Calculer la note moyenne basée sur les avis reçus
           const averageRating = reviewsAboutMe.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewsAboutMe.length;
           setUser(prev => ({
             ...prev,
@@ -167,7 +272,6 @@ const Profile = () => {
           }));
         } else {
           console.log("No reviews found ABOUT ME, trying alternative routes...");
-          // Essayez les routes publiques selon le rôle
           await tryAlternativeRoutes(token, userId);
         }
       } else {
@@ -188,7 +292,6 @@ const Profile = () => {
     try {
       let endpoint = "";
       
-      // Selon votre rôle, essayez les routes publiques
       if (user.role === "DOCTOR") {
         endpoint = `${API_BASE_URL}/reviews/doctor/${userId}`;
       } else if (user.role === "PHARMACIST") {
@@ -213,7 +316,6 @@ const Profile = () => {
           if (Array.isArray(data.data)) {
             setReceivedReviews(data.data);
             
-            // Calculer la note moyenne
             if (data.data.length > 0) {
               const averageRating = data.data.reduce((sum, review) => sum + (review.rating || 0), 0) / data.data.length;
               setUser(prev => ({
@@ -223,7 +325,6 @@ const Profile = () => {
               }));
             }
           } else if (data.data) {
-            // Si ce n'est pas un tableau mais un objet unique
             setReceivedReviews([data.data]);
             setUser(prev => ({
               ...prev,
@@ -290,7 +391,6 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Mettre à jour l'avis localement avec la nouvelle réponse
         setReceivedReviews(prev => prev.map(review => 
           review._id === reviewId 
             ? { 
@@ -304,7 +404,6 @@ const Profile = () => {
             : review
         ));
         
-        // Réinitialiser le champ de réponse
         setRespondingTo(null);
         setResponseTexts(prev => ({ ...prev, [reviewId]: "" }));
         
@@ -355,7 +454,6 @@ const Profile = () => {
 
   const fetchDoctorData = async (token, doctorId) => {
     try {
-      // Fetch doctor's appointments
       const appointmentsRes = await fetch(`${API_BASE_URL}/appointments`, {
         headers: {
           "Authorization": `Bearer ${token}`
@@ -366,7 +464,6 @@ const Profile = () => {
         setAppointments(appointmentsData.data || []);
       }
 
-      // Fetch doctor's availability
       const availabilityRes = await fetch(`${API_BASE_URL}/availability/my`, {
         headers: {
           "Authorization": `Bearer ${token}`
@@ -424,7 +521,6 @@ const Profile = () => {
         setShowAddSlot(false);
         setNewSlot({ date: "", startTime: "", endTime: "" });
         
-        // Refresh availability
         const availabilityRes = await fetch(`${API_BASE_URL}/availability/my`, {
           headers: {
             "Authorization": `Bearer ${token}`
@@ -581,7 +677,6 @@ const Profile = () => {
     try {
       if (!timeString) return "Heure inconnue";
       
-      // Si c'est un format HH:MM:SS ou HH:MM
       if (typeof timeString === 'string' && timeString.includes(':')) {
         const [hours, minutes] = timeString.split(':');
         const date = new Date();
@@ -591,7 +686,6 @@ const Profile = () => {
           minute: '2-digit'
         });
       }
-      // Si c'est une date ISO
       else if (typeof timeString === 'string' && timeString.includes('T')) {
         const date = new Date(timeString);
         return date.toLocaleTimeString("fr-FR", {
@@ -646,14 +740,14 @@ const Profile = () => {
   const getPaginatedAppointments = () => {
     const startIndex = (appointmentsPage - 1) * appointmentsPerPage;
     const endIndex = startIndex + appointmentsPerPage;
-    return appointments.slice(startIndex, endIndex);
+    return sortedAndFilteredAppointments.slice(startIndex, endIndex);
   };
 
   // Fonction pour calculer les disponibilités paginées
   const getPaginatedAvailability = () => {
     const startIndex = (availabilityPage - 1) * availabilityPerPage;
     const endIndex = startIndex + availabilityPerPage;
-    return availability.slice(startIndex, endIndex);
+    return sortedAndFilteredAvailability.slice(startIndex, endIndex);
   };
 
   // Fonction pour calculer le nombre total de pages
@@ -663,45 +757,46 @@ const Profile = () => {
 
   // Fonction pour changer de page (rendez-vous)
   const handleAppointmentsPageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= getTotalPages(appointments, appointmentsPerPage)) {
+    const totalPages = getTotalPages(sortedAndFilteredAppointments, appointmentsPerPage);
+    if (newPage >= 1 && newPage <= totalPages) {
       setAppointmentsPage(newPage);
     }
   };
 
   // Fonction pour changer de page (disponibilités)
   const handleAvailabilityPageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= getTotalPages(availability, availabilityPerPage)) {
+    const totalPages = getTotalPages(sortedAndFilteredAvailability, availabilityPerPage);
+    if (newPage >= 1 && newPage <= totalPages) {
       setAvailabilityPage(newPage);
     }
   };
 
   // Fonction pour générer les boutons de pagination
-  const renderPagination = (currentPage, totalPages, handlePageChange, itemsName) => {
+  const renderPagination = (currentPage, totalPages, handlePageChange, itemsName, totalItems) => {
     if (totalPages <= 1) return null;
+
+    const itemsPerPage = itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage;
+    const startItem = ((currentPage - 1) * itemsPerPage) + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
     const pages = [];
     
-    // Toujours afficher la première page
     pages.push(1);
     
-    // Ajouter des points de suspension si nécessaire avant
     if (currentPage > 3) {
       pages.push('...');
     }
     
-    // Ajouter les pages autour de la page courante
     for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
       if (!pages.includes(i)) {
         pages.push(i);
       }
     }
     
-    // Ajouter des points de suspension si nécessaire après
     if (currentPage < totalPages - 2) {
       pages.push('...');
     }
     
-    // Toujours afficher la dernière page
     if (totalPages > 1 && !pages.includes(totalPages)) {
       pages.push(totalPages);
     }
@@ -709,9 +804,7 @@ const Profile = () => {
     return (
       <div className="pagination">
         <div className="pagination-info">
-          Affichage {((currentPage - 1) * (itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage) + 1)}-
-          {Math.min(currentPage * (itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage), itemsName === 'appointments' ? appointments.length : availability.length)} 
-          sur {itemsName === 'appointments' ? appointments.length : availability.length} {itemsName === 'appointments' ? 'rendez-vous' : 'créneaux'}
+          Affichage {startItem}-{endItem} sur {totalItems} {itemsName === 'appointments' ? 'rendez-vous' : 'créneaux'}
         </div>
         
         <div className="pagination-controls">
@@ -748,11 +841,10 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Sélecteur d'éléments par page */}
         <div className="per-page-selector">
           <label>Afficher : </label>
           <select
-            value={itemsName === 'appointments' ? appointmentsPerPage : availabilityPerPage}
+            value={itemsPerPage}
             onChange={(e) => {
               if (itemsName === 'appointments') {
                 setAppointmentsPerPage(Number(e.target.value));
@@ -797,7 +889,6 @@ const Profile = () => {
         });
         setShowDeactivateModal(false);
         
-        // Mettre à jour l'état local
         setUser(prev => ({
           ...prev,
           isActive: false
@@ -846,7 +937,6 @@ const Profile = () => {
           confirmButtonColor: '#1B2688'
         });
         
-        // Mettre à jour l'état local
         setUser(prev => ({
           ...prev,
           isActive: true
@@ -876,13 +966,30 @@ const Profile = () => {
   const handleReviewsTabClick = () => {
     setActiveTab("reviews");
     
-    // Attendre un tick pour s'assurer que activeTab est mis à jour
     setTimeout(() => {
       if (user) {
-        // Pour TOUS les utilisateurs, on veut voir les avis reçus SUR EUX
         fetchReceivedReviews();
       }
     }, 100);
+  };
+
+  // Fonction pour obtenir l'icône de tri
+  const getSortIcon = (sortType, currentSort) => {
+    if (sortType !== currentSort) {
+      return <FaSort />;
+    }
+    return currentSort === "newest" ? <FaSortDown /> : <FaSortUp />;
+  };
+
+  // Fonction pour obtenir le label du filtre
+  const getFilterLabel = (filterType) => {
+    const labels = {
+      "all": "Tous",
+      "today": "Aujourd'hui",
+      "past": "Passés",
+      "future": "À venir"
+    };
+    return labels[filterType] || filterType;
   };
 
   if (loading) {
@@ -944,7 +1051,6 @@ const Profile = () => {
           <section className="card">
             <h2>Informations générales</h2>
             
-            {/* Statut du compte */}
             {(user.role === "DOCTOR" || user.role === "PHARMACIST") && (
               <div className={`account-status-banner ${user.isActive ? 'active' : 'inactive'}`}>
                 <div className="status-info">
@@ -982,7 +1088,6 @@ const Profile = () => {
               )}
             </div>
             
-            {/* Gestion du compte pour Doctor/Pharmacist */}
             {(user.role === "DOCTOR" || user.role === "PHARMACIST") && (
               <div className="account-management">
                 <h3>Gestion du compte</h3>
@@ -1021,15 +1126,75 @@ const Profile = () => {
             <section className="card">
               <h2>
                 <FaCalendarAlt /> Mes Rendez-vous
-                <span className="badge">{appointments.length}</span>
+                <span className="badge">{sortedAndFilteredAppointments.length}</span>
               </h2>
               
-              {appointments.length === 0 ? (
+              {/* Filtres et tris pour les rendez-vous */}
+              <div className="filter-sort-controls">
+                <div className="filter-group">
+                  <FaFilter className="filter-icon" />
+                  <span className="filter-label">Filtrer par :</span>
+                  <div className="filter-buttons">
+                    <button 
+                      className={`filter-btn ${appointmentFilter === "all" ? "active" : ""}`}
+                      onClick={() => setAppointmentFilter("all")}
+                    >
+                      Tous ({appointments.length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${appointmentFilter === "today" ? "active" : ""}`}
+                      onClick={() => setAppointmentFilter("today")}
+                    >
+                      Aujourd'hui ({appointments.filter(app => isToday(getAppointmentDate(app))).length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${appointmentFilter === "past" ? "active" : ""}`}
+                      onClick={() => setAppointmentFilter("past")}
+                    >
+                      Passés ({appointments.filter(app => isPast(getAppointmentDate(app))).length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${appointmentFilter === "future" ? "active" : ""}`}
+                      onClick={() => setAppointmentFilter("future")}
+                    >
+                      À venir ({appointments.filter(app => isFuture(getAppointmentDate(app))).length})
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="sort-group">
+                  <span className="sort-label">Trier par :</span>
+                  <div className="sort-buttons">
+                    <button 
+                      className={`sort-btn ${appointmentSort === "newest" ? "active" : ""}`}
+                      onClick={() => setAppointmentSort("newest")}
+                    >
+                      {getSortIcon("newest", appointmentSort)} Plus récents
+                    </button>
+                    <button 
+                      className={`sort-btn ${appointmentSort === "oldest" ? "active" : ""}`}
+                      onClick={() => setAppointmentSort("oldest")}
+                    >
+                      {getSortIcon("oldest", appointmentSort)} Plus anciens
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {sortedAndFilteredAppointments.length === 0 ? (
                 <div className="empty-state">
                   <FaCalendarAlt size={48} />
-                  <p>Aucun rendez-vous trouvé</p>
-                  {user.role === "PATIENT" && (
-                    <a href="/doctors" className="btn-primary">Prendre un rendez-vous</a>
+                  <p>Aucun rendez-vous {appointmentFilter !== "all" ? getFilterLabel(appointmentFilter).toLowerCase() : ""} trouvé</p>
+                  {appointmentFilter !== "all" && (
+                    <button 
+                      className="btn-secondary" 
+                      onClick={() => setAppointmentFilter("all")}
+                    >
+                      Voir tous les rendez-vous
+                    </button>
+                  )}
+                  {user.role === "PATIENT" && appointmentFilter === "all" && (
+                    <a href="/doctors" className="btn-primaryy">Prendre un rendez-vous</a>
                   )}
                 </div>
               ) : (
@@ -1046,10 +1211,19 @@ const Profile = () => {
                               }
                             </h4>
                             <p className="appointment-time">
-                              <FaClock /> {formatDate(appointment.startDateTime)} 
+                              <FaClock /> {formatDate(getAppointmentDate(appointment))} 
                               <br />
                               {formatTime(appointment.startDateTime)} - {formatTime(appointment.endDateTime)}
                             </p>
+                            <div className="appointment-date-badge">
+                              {isToday(getAppointmentDate(appointment)) ? (
+                                <span className="badge badge-today">Aujourd'hui</span>
+                              ) : isPast(getAppointmentDate(appointment)) ? (
+                                <span className="badge badge-past">Passé</span>
+                              ) : (
+                                <span className="badge badge-future">À venir</span>
+                              )}
+                            </div>
                           </div>
                           <span className={`status-badge ${appointment.status.toLowerCase()}`}>
                             {appointment.status}
@@ -1094,9 +1268,10 @@ const Profile = () => {
                   {/* Pagination pour les rendez-vous */}
                   {renderPagination(
                     appointmentsPage, 
-                    getTotalPages(appointments, appointmentsPerPage), 
+                    getTotalPages(sortedAndFilteredAppointments, appointmentsPerPage), 
                     handleAppointmentsPageChange,
-                    'appointments'
+                    'appointments',
+                    sortedAndFilteredAppointments.length
                   )}
                 </>
               )}
@@ -1111,11 +1286,63 @@ const Profile = () => {
               <div className="display">
                 <h2><FaCalendarPlus /> Mes Disponibilités</h2>
                 <button 
-                  className="btn-primary ajoter-creneau-btn"
+                  className="btn-primaryy ajoter-creneau-btn"
                   onClick={() => setShowAddSlot(true)}
                 >
                   + Ajouter un créneau
                 </button>
+              </div>
+
+              {/* Filtres et tris pour les disponibilités */}
+              <div className="filter-sort-controls">
+                <div className="filter-group">
+                  <FaFilter className="filter-icon" />
+                  <span className="filter-label">Filtrer par :</span>
+                  <div className="filter-buttons">
+                    <button 
+                      className={`filter-btn ${availabilityFilter === "all" ? "active" : ""}`}
+                      onClick={() => setAvailabilityFilter("all")}
+                    >
+                      Tous ({availability.length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${availabilityFilter === "today" ? "active" : ""}`}
+                      onClick={() => setAvailabilityFilter("today")}
+                    >
+                      Aujourd'hui ({availability.filter(slot => isToday(getAvailabilityDate(slot))).length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${availabilityFilter === "past" ? "active" : ""}`}
+                      onClick={() => setAvailabilityFilter("past")}
+                    >
+                      Passés ({availability.filter(slot => isPast(getAvailabilityDate(slot))).length})
+                    </button>
+                    <button 
+                      className={`filter-btn ${availabilityFilter === "future" ? "active" : ""}`}
+                      onClick={() => setAvailabilityFilter("future")}
+                    >
+                      À venir ({availability.filter(slot => isFuture(getAvailabilityDate(slot))).length})
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="sort-group">
+                  <span className="sort-label">Trier par :</span>
+                  <div className="sort-buttons">
+                    <button 
+                      className={`sort-btn ${availabilitySort === "newest" ? "active" : ""}`}
+                      onClick={() => setAvailabilitySort("newest")}
+                    >
+                      {getSortIcon("newest", availabilitySort)} Plus récents
+                    </button>
+                    <button 
+                      className={`sort-btn ${availabilitySort === "oldest" ? "active" : ""}`}
+                      onClick={() => setAvailabilitySort("oldest")}
+                    >
+                      {getSortIcon("oldest", availabilitySort)} Plus anciens
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Add Slot Form */}
@@ -1129,6 +1356,7 @@ const Profile = () => {
                         type="date" 
                         value={newSlot.date}
                         onChange={(e) => setNewSlot({...newSlot, date: e.target.value})}
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                     <div className="form-group">
@@ -1160,10 +1388,22 @@ const Profile = () => {
               )}
 
               {/* Availability List */}
-              {availability.length === 0 ? (
+              {sortedAndFilteredAvailability.length === 0 ? (
                 <div className="empty-state">
-                  <p>Aucune disponibilité programmée</p>
-                  <p className="text-muted">Ajoutez vos premiers créneaux de disponibilité</p>
+                  <p>Aucune disponibilité {availabilityFilter !== "all" ? getFilterLabel(availabilityFilter).toLowerCase() : ""} trouvée</p>
+                  <p className="text-muted">
+                    {availabilityFilter === "all" 
+                      ? "Ajoutez vos premiers créneaux de disponibilité"
+                      : `Aucun créneau ${getFilterLabel(availabilityFilter).toLowerCase()} trouvé`}
+                  </p>
+                  {availabilityFilter !== "all" && (
+                    <button 
+                      className="btn-secondary" 
+                      onClick={() => setAvailabilityFilter("all")}
+                    >
+                      Voir toutes les disponibilités
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1182,8 +1422,15 @@ const Profile = () => {
                               <p>
                                 <FaClock /> {formatTime(slotStartTime)} - {formatTime(slotEndTime)}
                               </p>
-                              <small style={{ color: '#666', fontSize: '0.8rem' }}>
-                              </small>
+                              <div className="slot-date-badge">
+                                {isToday(slotDate) ? (
+                                  <span className="badge badge-today">Aujourd'hui</span>
+                                ) : isPast(slotDate) ? (
+                                  <span className="badge badge-past">Passé</span>
+                                ) : (
+                                  <span className="badge badge-future">À venir</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <button 
@@ -1200,9 +1447,10 @@ const Profile = () => {
                   {/* Pagination pour les disponibilités */}
                   {renderPagination(
                     availabilityPage, 
-                    getTotalPages(availability, availabilityPerPage), 
+                    getTotalPages(sortedAndFilteredAvailability, availabilityPerPage), 
                     handleAvailabilityPageChange,
-                    'availability'
+                    'availability',
+                    sortedAndFilteredAvailability.length
                   )}
                 </>
               )}
@@ -1239,7 +1487,7 @@ const Profile = () => {
               <div className="error-state">
                 <p>{reviewsError}</p>
                 <button 
-                  className="btn-primary" 
+                  className="btn-primaryy" 
                   onClick={fetchReceivedReviews}
                 >
                   Réessayer
@@ -1247,7 +1495,6 @@ const Profile = () => {
               </div>
             ) : (
               <>
-                {/* Statistiques et note moyenne */}
                 <div className="rating-overview">
                   <div className="average-rating">
                     <h3>Note moyenne</h3>
@@ -1256,11 +1503,8 @@ const Profile = () => {
                     </div>
                     <p>Basé sur {receivedReviews.length} avis</p>
                   </div>
-                  
-                
                 </div>
                 
-                {/* Liste des avis reçus SUR MOI */}
                 <div className="received-reviews">
                   <div className="section-header">
                     <h4>Avis reçus sur moi ({receivedReviews.length})</h4>
@@ -1293,7 +1537,6 @@ const Profile = () => {
                             </div>
                             <p className="review-comment">{review.comment || "Pas de commentaire"}</p>
                             
-                            {/* Réponse existante du professionnel */}
                             {review.response && (
                               <div className="review-response">
                                 <div className="response-header">
@@ -1303,7 +1546,6 @@ const Profile = () => {
                               </div>
                             )}
                             
-                            {/* Formulaire de réponse (si pas de réponse existante) */}
                             {!review.response && respondingTo === review._id ? (
                               <div className="response-form">
                                 <textarea
@@ -1334,7 +1576,6 @@ const Profile = () => {
                                 </div>
                               </div>
                             ) : !review.response && user.role !== "PATIENT" && (
-                              // Seuls les professionnels peuvent répondre
                               <div className="response-actions">
                                 <button 
                                   className="btn-sm btn-outline"
@@ -1348,7 +1589,6 @@ const Profile = () => {
                         ))}
                       </div>
                       
-                      {/* Pagination pour les avis reçus */}
                       {Math.ceil(receivedReviews.length / reviewsPerPage) > 1 && (
                         <div className="reviews-pagination">
                           <div className="pagination-info">
