@@ -135,7 +135,48 @@ twoFactorCodeExpiresAt: {
     type: String,
     default: null,
   },
+
+  licenseRejectionReason: {
+    type: String,
+    default: null,
+  },
+  
+  // ✅ AJOUTEZ CES CHAMPS (PORTEFEUILLE)
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  totalEarned: {
+    type: Number,
+    default: 0
+  },
+  pendingBalance: {
+    type: Number,
+    default: 0
+  },
+  lastWithdrawal: {
+    type: Date,
+    default: null
+  },
+  
+  // ✅ COMPTE BANCAIRE (pour médecins)
+  bankAccount: {
+    accountHolder: String,
+    bankName: String,
+    accountNumber: String,
+    iban: String,
+    swiftCode: String,
+    verified: {
+      type: Boolean,
+      default: false
+    }
+  }
+}, {
+  timestamps: true,
 });
+
+// RESTE DU FICHIER INCHANGÉ
 
 // Index for faster email lookups
 userSchema.index({ email: 1 });

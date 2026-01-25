@@ -30,6 +30,7 @@ import UserList from "./pages/admin/UserList";
 import VideoRoom from "./pages/VideoRoom";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import Payments from "./pages/Payments";
 
 /* Layout avec Navbar + Footer (sans Chatbot ici) */
 const MainLayout = ({ children }) => (
@@ -201,8 +202,10 @@ function App() {
             </MainLayout>
           }
         />
-          <Route path="/payment/success" element={<PaymentSuccess />} />
-          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route path="/payment/success" element={<MainLayout><PaymentSuccess /></MainLayout>} />
+          <Route path="/payment/cancel" element={<MainLayout><PaymentCancel /></MainLayout>} />
+          <Route path="/payments" element={ <MainLayout><Payments /></MainLayout>} />
+
         {/* Page 404 */}
         <Route
           path="*"

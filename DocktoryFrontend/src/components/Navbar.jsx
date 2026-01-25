@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   FaBell, FaUser, FaPhone, FaSignOutAlt, FaSignInAlt, 
   FaBars, FaTimes, FaCog, FaEnvelope, FaCalendarAlt,
-  FaHome, FaStethoscope, FaUserMd
+  FaHome, FaStethoscope, FaUserMd, FaWallet, FaMoneyBillWave, FaCreditCard
 } from 'react-icons/fa';
 import { MdFavorite, MdPayment } from 'react-icons/md';
 import { io } from 'socket.io-client';
@@ -20,7 +20,7 @@ export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const socketRef = useRef(null);
 
-  // Fetch user profile to get profileImage
+  // Fetch user profile
   const fetchUserProfile = async (userId, token) => {
     try {
       const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
@@ -48,7 +48,7 @@ export default function Navbar() {
       });
       const data = await response.json();
       if (data.success) {
-        setNotifications(data.data.slice(0, 5)); // Get last 5 notifications
+        setNotifications(data.data.slice(0, 5));
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -70,6 +70,66 @@ export default function Navbar() {
       }
     } catch (error) {
       console.error("Error fetching unread count:", error);
+    }
+  };
+
+  // Get notification icon based on type
+  const getNotificationIcon = (type) => {
+    switch(type) {
+      case 'PAYMENT_SUCCESS':
+      case 'PAYMENT_RECEIVED':
+      case 'PAYMENT_CONFIRMED':
+        return <FaWallet style={{ color: '#ecf3efff' }} />;
+      case 'PAYMENT_FAILED':
+        return <FaCreditCard style={{ color: '#e74c3c' }} />;
+      case 'PAYMENT_PENDING':
+        return <FaMoneyBillWave style={{ color: '#f39c12' }} />;
+      case 'PAYMENT_REFUND':
+        return <FaMoneyBillWave style={{ color: '#9b59b6' }} />;
+      case 'APPOINTMENT_REQUESTED':
+      case 'APPOINTMENT_CONFIRMED':
+      case 'APPOINTMENT_CANCELLED':
+      case 'APPOINTMENT_COMPLETED':
+        return <FaCalendarAlt style={{ color: '#3498db' }} />;
+      default:
+        return <FaBell style={{ color: '#95a5a6' }} />;
+    }
+  };
+
+  // Get payment status text in French
+  const getPaymentStatusText = (type) => {
+    switch(type) {
+      case 'PAYMENT_SUCCESS':
+        return { title: 'Paiement Réussi', status: 'success' };
+      case 'PAYMENT_RECEIVED':
+        return { title: 'Paiement Reçu', status: 'received' };
+      case 'PAYMENT_CONFIRMED':
+        return { title: 'Paiement Confirmé', status: 'confirmed' };
+      case 'PAYMENT_FAILED':
+        return { title: 'Paiement Échoué', status: 'failed' };
+      case 'PAYMENT_PENDING':
+        return { title: 'Paiement en Attente', status: 'pending' };
+      case 'PAYMENT_REFUND':
+        return { title: 'Remboursement', status: 'refund' };
+      default:
+        return { title: 'Notification', status: 'info' };
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification) => {
+    // Mark as read
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+
+    // Redirect based on notification type
+    if (notification.type.includes('PAYMENT')) {
+      // For payment notifications, redirect to payments page
+      window.location.href = '/payments';
+    } else if (notification.appointmentId) {
+      // For appointment notifications, redirect to appointments
+      window.location.href = '/my-appointments';
     }
   };
 
@@ -96,6 +156,12 @@ export default function Navbar() {
       socketRef.current.on("new-notification", (notification) => {
         console.log("New notification received:", notification);
         setNotifications((prev) => [notification, ...prev.slice(0, 4)]);
+        
+        // Show toast notification for payment notifications
+        if (notification.type.includes('PAYMENT')) {
+          const status = getPaymentStatusText(notification.type);
+          showPaymentNotificationToast(status.title, notification.message);
+        }
       });
 
       // Listen for unread count updates
@@ -117,6 +183,25 @@ export default function Navbar() {
       };
     }
   }, []);
+
+  // Show payment notification toast
+  const showPaymentNotificationToast = (title, message) => {
+    // You can use SweetAlert2 or any other toast library
+    Swal.fire({
+      icon: 'info',
+      title: title,
+      text: message,
+      timer: 5000,
+      showConfirmButton: true,
+      confirmButtonText: 'Voir',
+      showCancelButton: true,
+      cancelButtonText: 'Fermer'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = '/payments';
+      }
+    });
+  };
 
   // Mark notification as read
   const markAsRead = async (notificationId) => {
@@ -155,7 +240,6 @@ export default function Navbar() {
   const userName = user?.fullName || "Utilisateur";
   const userEmail = user?.email || "";
 
-  // Fonction simple pour basculer le menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -172,13 +256,11 @@ export default function Navbar() {
     window.location.href = "/signin";
   };
 
-  // Fermeture du menu mobile quand on clique sur un lien
   const closeMenu = () => {
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
   };
 
-  // Fermer le menu en cliquant à l'extérieur (seulement pour desktop)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isUserMenuOpen && !event.target.closest('.user-menu-container')) {
@@ -189,7 +271,6 @@ export default function Navbar() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isUserMenuOpen]);
 
-  // Empêcher le scroll du body quand le menu mobile est ouvert
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -217,9 +298,8 @@ export default function Navbar() {
             <span className="brand">Doctory</span>
           </a>
 
-       {/* Menu hamburger pour mobile - BOUTON SIMPLIFIÉ */}
           <button 
-            className="hamburger-btn mobile-only"  // Ajoutez "mobile-only" ici
+            className="hamburger-btn mobile-only"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
@@ -231,9 +311,7 @@ export default function Navbar() {
             <a href="/"><FaHome /> <span>Accueil</span></a>
             <a href="/services"><FaStethoscope /> <span>Services</span></a>
             <a href="/doctors"><FaUserMd /> <span>Médecins</span></a>
-            <a href="/contact" >
-              <FaPhone /> <span>Contact</span>
-            </a>
+            <a href="/contact"><FaPhone /> <span>Contact</span></a>
           </nav>
 
           {/* Côté droit DESKTOP */}
@@ -269,39 +347,45 @@ export default function Navbar() {
                           <p>Aucune notification</p>
                         </div>
                       ) : (
-                        notifications.map((notification) => (
-                          <div 
-                            key={notification._id} 
-                            className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
-                            onClick={() => {
-                              if (!notification.isRead) {
-                                markAsRead(notification._id);
-                              }
-                              if (notification.appointmentId) {
-                                window.location.href = '/my-appointments';
-                              }
-                            }}
-                          >
-                            <div className="notification-icon">
-                              <FaCalendarAlt />
+                        notifications.map((notification) => {
+                          const paymentStatus = notification.type.includes('PAYMENT') 
+                            ? getPaymentStatusText(notification.type)
+                            : null;
+                          
+                          return (
+                            <div 
+                              key={notification._id} 
+                              className={`notification-item ${!notification.isRead ? 'unread' : ''} ${notification.type.includes('PAYMENT') ? 'payment-notification' : ''}`}
+                              onClick={() => handleNotificationClick(notification)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <div className="notification-icon">
+                                {getNotificationIcon(notification.type)}
+                              </div>
+                              <div className="notification-content">
+                                <h4>
+                                  {paymentStatus ? paymentStatus.title : notification.title}
+                                  {notification.type.includes('PAYMENT') && (
+                                    <span className={`payment-status-badge status-${paymentStatus.status}`}>
+                                    </span>
+                                  )}
+                                </h4>
+                                <p>{notification.message}</p>
+                                <span className="notification-time">
+                                  {new Date(notification.createdAt).toLocaleDateString('fr-FR', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              {!notification.isRead && (
+                                <div className="notification-unread-dot"></div>
+                              )}
                             </div>
-                            <div className="notification-content">
-                              <h4>{notification.title}</h4>
-                              <p>{notification.message}</p>
-                              <span className="notification-time">
-                                {new Date(notification.createdAt).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </span>
-                            </div>
-                            {!notification.isRead && (
-                              <div className="notification-unread-dot"></div>
-                            )}
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                     <div className="notifications-footer">
@@ -374,13 +458,14 @@ export default function Navbar() {
                             <span className="dropdown-item-desc">Voir vos consultations</span>
                           </div>
                         </a>
+                        
                         <a href="/security" className="dropdown-item">
-                            <FaCog />
-                            <div className="dropdown-item-content">
+                          <FaCog />
+                          <div className="dropdown-item-content">
                             <span className="dropdown-item-title">Sécurité & 2FA</span>
                             <span className="dropdown-item-desc">Gérer la sécurité de votre compte</span>
                           </div>
-                          </a>
+                        </a>
 
                         <a href="/favorites" className="dropdown-item" onClick={closeMenu}>
                           <MdFavorite />
@@ -401,7 +486,7 @@ export default function Navbar() {
                         <a href="/payments" className="dropdown-item" onClick={closeMenu}>
                           <MdPayment />
                           <div className="dropdown-item-content">
-                            <span className="dropdown-item-title">Paiements</span>
+                            <span className="dropdown-item-title">Paiements & Reçus</span>
                             <span className="dropdown-item-desc">Historique & factures</span>
                           </div>
                         </a>
@@ -513,7 +598,7 @@ export default function Navbar() {
                 </a>
                 <a href="/payments" className="mobile-nav-item" onClick={closeMenu}>
                   <MdPayment />
-                  <span>Paiements</span>
+                  <span>Paiements & Reçus</span>
                 </a>
                 <a href="/settings" className="mobile-nav-item" onClick={closeMenu}>
                   <FaCog />

@@ -140,7 +140,23 @@ class PaymentService {
         }
         
         await appointment.save();
-
+        
+          // ✅ AJOUTER: Mettre à jour le portefeuille du médecin
+        try {
+          const doctor = await User.findById(appointment.doctorId._id);
+          if (doctor && doctor.role === "DOCTOR") {
+            // Ajouter 85% au médecin (15% de commission)
+            const doctorShare = payment.amount * 0.85;
+            doctor.walletBalance += doctorShare;
+            doctor.totalEarned += doctorShare;
+            await doctor.save();
+            
+            console.log(`💰 Médecin ${doctor.fullName} a reçu ${doctorShare} DT`);
+          }
+        } catch (walletError) {
+          console.error("Erreur mise à jour portefeuille:", walletError);
+          // Ne pas bloquer le paiement pour une erreur de portefeuille
+        }
         // Créer un enregistrement de paiement
         const payment = new Payment({
             appointmentId: appointment._id,
