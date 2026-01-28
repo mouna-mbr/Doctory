@@ -19,7 +19,11 @@ const notificationSchema = new mongoose.Schema(
         "PAYMENT_RECEIVED",
         "PAYMENT_FAILED", 
         "PAYMENT_REFUND",
-        "PAYMENT_PENDING"
+        "PAYMENT_PENDING",
+        "EXAM_REQUESTED",        // Prescription d'un examen
+        "EXAM_SCHEDULED",        // Examen programmé
+        "EXAM_RESULTS_READY",    // Résultats disponibles
+        "EXAM_REVIEWED",
       ],
       required: true,
     },

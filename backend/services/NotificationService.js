@@ -223,6 +223,81 @@ async createPaymentRefundNotification(patientId, doctorName, amount, appointment
 
   return notification;
 }
+
+
+// Dans NotificationService.js - ajouter ces méthodes
+
+// Notification pour nouvelle ordonnance
+async createPrescriptionNotification(patientId, doctorId, prescriptionId) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "PRESCRIPTION_CREATED",
+    title: "Nouvelle ordonnance disponible",
+    message: "Votre médecin a créé une ordonnance pour vous. Téléchargez-la depuis votre espace patient.",
+    prescriptionId,
+  });
+
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
+
+// Notification pour demande d'examen
+async createExamRequestNotification(patientId, doctorId, examId, examType) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "EXAM_REQUESTED",
+    title: "Demande d'examen médical",
+    message: `Votre médecin vous a prescrit un ${examType}. Consultez les détails dans votre espace patient.`,
+    examId,
+  });
+
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
+
+// Notification pour résultats d'examen téléchargés
+async createExamResultsNotification(doctorId, patientId, examId) {
+  const notification = await NotificationRepository.create({
+    userId: doctorId,
+    type: "EXAM_RESULTS_UPLOADED",
+    title: "Résultats d'examen disponibles",
+    message: "Votre patient a téléchargé les résultats d'examen. Veuillez les consulter.",
+    examId,
+  });
+
+  emitNotificationToUser(doctorId, notification);
+  const count = await NotificationRepository.getUnreadCount(doctorId);
+  emitUnreadCountToUser(doctorId, count);
+
+  return notification;
+}
+
+// Notification pour examen revu
+async createExamReviewedNotification(patientId, doctorId, examId) {
+  const notification = await NotificationRepository.create({
+    userId: patientId,
+    type: "EXAM_REVIEWED",
+    title: "Résultats d'examen analysés",
+    message: "Votre médecin a analysé vos résultats d'examen. Consultez ses commentaires.",
+    examId,
+  });
+
+  emitNotificationToUser(patientId, notification);
+  const count = await NotificationRepository.getUnreadCount(patientId);
+  emitUnreadCountToUser(patientId, count);
+
+  return notification;
+}
+
+// Ajouter ces types dans le modèle Notification
+// "PRESCRIPTION_CREATED", "PRESCRIPTION_SIGNED", "EXAM_REQUESTED", 
+// "EXAM_RESULTS_UPLOADED", "EXAM_REVIEWED"
 }
 
 module.exports = new NotificationService();

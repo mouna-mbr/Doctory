@@ -1,4 +1,327 @@
+
 /* ===== Overlay ===== */
+/* Styles de pagination */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.pagination-controls.top {
+  margin-bottom: 20px;
+}
+
+.pagination-controls.bottom {
+  margin-top: 20px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #666;
+}
+
+.pagination-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-select label {
+  font-size: 14px;
+  color: #666;
+}
+
+.pagination-select select {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.pagination-navigation {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+}
+
+.page-number {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-number:hover {
+  background-color: #f1f1f1;
+}
+
+.page-number.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.pagination-jump {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-jump span {
+  font-size: 14px;
+  color: #666;
+}
+
+.pagination-jump input {
+  width: 60px;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pagination-controls {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .pagination-navigation {
+    order: 2;
+  }
+  
+  .pagination-info {
+    order: 1;
+    text-align: center;
+  }
+  
+  .pagination-jump {
+    order: 3;
+  }
+  
+  .pagination-select {
+    order: 4;
+  }
+}
+/* Styles pour les boutons de prescription et examen */
+.doctor-medical-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.prescription-btn, .exam-btn {
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 8px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  text-decoration: none;
+}
+
+/* Bouton prescription */
+.prescription-btn {
+  background: linear-gradient(135deg, #1B2688 0%, #4a6cf7 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(27, 38, 136, 0.2);
+}
+
+.prescription-btn:hover {
+  background: linear-gradient(135deg, #0f1557 0%, #3a56d8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(27, 38, 136, 0.3);
+}
+
+.prescription-btn:active {
+  transform: translateY(0);
+}
+
+.prescription-btn:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Bouton examen */
+.exam-btn {
+  margin-left: 10px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.exam-btn:hover {
+  background: linear-gradient(135deg, #1e7e34 0%, #17a589 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+}
+
+.exam-btn:active {
+  transform: translateY(0);
+}
+
+.exam-btn:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Boutons dans un container */
+.prescription-exam-actions {
+  display: flex;
+  gap: 20px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Version outline (alternative) */
+.prescription-btn.outline, .exam-btn.outline {
+  background: transparent;
+  border: 2px solid;
+}
+
+.prescription-btn.outline {
+  border-color: #1B2688;
+  color: #1B2688;
+}
+
+.prescription-btn.outline:hover {
+  background: #1B2688;
+  color: white;
+}
+
+.exam-btn.outline {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.exam-btn.outline:hover {
+  background: #28a745;
+  color: white;
+}
+
+/* Version small */
+.prescription-btn.small, .exam-btn.small {
+  padding: 10px 20px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* Version large */
+.prescription-btn.large, .exam-btn.large {
+  padding: 18px 36px;
+  font-size: 18px;
+  min-width: 250px;
+}
+
+/* Version avec icônes */
+.prescription-btn .btn-icon, .exam-btn .btn-icon {
+  font-size: 1.2em;
+}
+
+/* Spinner dans les boutons */
+.prescription-btn .spinner-small, .exam-btn .spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Boutons dans une carte */
+.card .prescription-btn, .card .exam-btn {
+  margin: 10px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .prescription-exam-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .prescription-btn, .exam-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* Exemple d'utilisation dans une carte */
+.prescription-exam-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
+}
+
+.prescription-exam-card h3 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.prescription-exam-description {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -171,12 +494,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+    background: #f8f9fa;
+
   gap: 10px;
   padding: 14px 28px;
-  background: rgba(27, 38, 136, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   font-size: 15px;
@@ -187,7 +510,6 @@
   position: relative;
   overflow: hidden;
   min-width: 180px;
-  box-shadow: 0 8px 32px rgba(27, 38, 136, 0.2);
 }
 
 .view-profile-btn:before {
@@ -211,9 +533,7 @@
 }
 
 .view-profile-btn:hover {
-  background: rgba(27, 38, 136, 0.95);
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(27, 38, 136, 0.3);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
@@ -305,7 +625,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .stat-card {
@@ -377,7 +697,7 @@
 
 /* Filtres */
 .filters-section-myappointments {
-  margin-bottom: 2rem;
+  
   padding: 1.5rem;
   background: #f8f9fa;
   border-radius: 12px;
@@ -446,7 +766,7 @@
   margin-bottom: 3rem;
 }
 
-.appointment-card {
+.appointment-cardd {
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -455,29 +775,29 @@
   border-left: 4px solid #1B2688;
 }
 
-.appointment-card:hover {
+.appointment-cardd:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.appointment-card.REQUESTED,
-.appointment-card.pending {
+.appointment-cardd.REQUESTED,
+.appointment-cardd.pending {
   border-left-color: #f39c12;
 }
 
-.appointment-card.CONFIRMED,
-.appointment-card.confirmed {
+.appointment-cardd.CONFIRMED,
+.appointment-cardd.confirmed {
   border-left-color: #27ae60;
 }
 
-.appointment-card.CANCELLED,
-.appointment-card.cancelled {
+.appointment-cardd.CANCELLED,
+.appointment-cardd.cancelled {
   border-left-color: #e74c3c;
   opacity: 0.8;
 }
 
-.appointment-card.COMPLETED,
-.appointment-card.completed {
+.appointment-cardd.COMPLETED,
+.appointment-cardd.completed {
   border-left-color: #3498db;
 }
 
@@ -513,7 +833,7 @@
 }
 
 .appointment-body {
-  padding: 1.5rem;
+  padding-left: 50px;
 }
 
 .appointment-info {
@@ -580,6 +900,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #e0e0e0;
 }
@@ -1332,6 +1653,7 @@
   }
   
   .appointment-actions {
+    margin-bottom: 10px;
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
@@ -1388,5 +1710,619 @@
   
   .legend-items {
     flex-direction: column;
+  }
+}
+/* ===================== ROOT ===================== */
+:root {
+  --primary: #0b3c5d;        /* bleu médical */
+  --secondary: #1d6fa5;
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --light: #f8fafc;
+  --gray: #6b7280;
+  --border: #e5e7eb;
+  --card-bg: #ffffff;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ===================== SECTIONS ===================== */
+.prescriptions-section,
+.exams-section {
+  padding: 24px;
+  background: var(--light);
+  min-height: 100%;
+}
+
+.section-header {
+  margin-bottom: 24px;
+}
+
+.section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary);
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+}
+
+.section-header p {
+  color: var(--gray);
+}
+
+/* ===================== LOADING & EMPTY ===================== */
+.loading-state,
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray);
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid var(--border);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===================== GRIDS ===================== */
+.prescriptions-grid,
+.exams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 22px;
+}
+
+/* ===================== CARD BASE ===================== */
+.prescription-card,
+.exam-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.prescription-card:hover,
+.exam-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ===================== HEADER ===================== */
+.prescription-header,
+.exam-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prescription-info h3,
+.exam-info h3 {
+  margin: 0;
+  color: var(--primary);
+}
+
+.prescription-meta,
+.exam-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+/* ===================== STATUS BADGE ===================== */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===================== BODY ===================== */
+.prescription-body,
+.exam-body {
+  padding: 18px 20px;
+  flex: 1;
+}
+
+.prescription-body h4,
+.exam-body h4 {
+  margin: 0 0 8px;
+  color: var(--secondary);
+}
+
+/* ===================== MEDICATIONS ===================== */
+.medications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.medication-item {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.medication-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-top: 6px;
+}
+
+.medication-instructions {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+/* ===================== FOOTERS ===================== */
+.prescription-footer,
+.exam-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--gray);
+}
+
+/* ===================== ACTIONS ===================== */
+.prescription-actions,
+.exam-actions {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Variants */
+.view-btn {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.download-btn {
+  background: #ecfeff;
+  color: #0369a1;
+}
+
+.print-btn {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.results-btn {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+/* ===================== EXAMS ===================== */
+.exam-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.detail-label {
+  color: var(--gray);
+}
+
+.detail-value {
+  font-weight: 500;
+}
+
+/* ===================== RESULTS ===================== */
+.exam-results {
+  margin-top: 14px;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.result-download-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+/* ===================== PRIORITY ===================== */
+.priority-urgent {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.priority-normal {
+  color: var(--secondary);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 768px) {
+  .prescriptions-grid,
+  .exams-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prescription-footer,
+  .exam-footer {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+/* ===== Overlay ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* ===== Modal Container ===== */
+.prescription-detail-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: fadeInScale 0.25s ease;
+  overflow: hidden;
+}
+
+/* ===== Header ===== */
+/* ===== Container ===== */
+.medical-tabs {
+  display: flex;
+  gap: 12px;
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* ===== Tab Button ===== */
+.medical-tab {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+  background: transparent;
+  border: none;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.25s ease;
+}
+
+/* Hover */
+.medical-tab:hover {
+  background: #e0f2fe;
+  color: #2563eb;
+}
+
+/* ===== Active ===== */
+.medical-tab.active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+}
+
+/* Icon size */
+.medical-tab svg {
+  font-size: 16px;
+}
+
+/* ===== Badge ===== */
+.tab-badge {
+  background: #e11d48;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-left: 6px;
+  line-height: 1;
+}
+
+/* Badge when active */
+.medical-tab.active .tab-badge {
+  background: #ffffff;
+  color: #2563eb;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .medical-tabs {
+    flex-direction: column;
+  }
+
+  .medical-tab {
+    justify-content: space-between;
+  }
+}
+
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  opacity: 0.8;
+}
+
+/* ===== Body ===== */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ===== Sections ===== */
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h4 {
+  font-size: 15px;
+  color: #1e3a8a;
+  margin-bottom: 12px;
+  border-left: 4px solid #2563eb;
+  padding-left: 10px;
+}
+
+/* ===== Grid Infos ===== */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-item strong {
+  color: #334155;
+}
+
+/* ===== Status ===== */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ===== Text blocks ===== */
+.detail-section p {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+/* ===== Medications ===== */
+.medications-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.medication-detail-item {
+  background: #f1f5f9;
+  padding: 14px;
+  border-radius: 12px;
+  border-left: 4px solid #2563eb;
+}
+
+.med-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.med-header strong {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.dosage {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* ===== Med info ===== */
+.med-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.med-instructions {
+  font-size: 13px;
+  color: #334155;
+  background: #e0f2fe;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+/* ===== Validity ===== */
+.validity-info p {
+  font-size: 13px;
+  color: #334155;
+  margin: 6px 0;
+}
+
+/* ===== Footer actions ===== */
+.modal-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #fafafa;
+}
+
+.modal-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Secondary */
+.modal-btn.secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.modal-btn.secondary:hover {
+  background: #d1d5db;
+}
+
+/* Primary */
+.modal-btn.primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-btn.primary:hover {
+  background: #1e40af;
+}
+
+/* ===== Animation ===== */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

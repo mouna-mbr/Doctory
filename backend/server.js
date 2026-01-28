@@ -38,8 +38,13 @@ const availabilityRoutes = require("./routes/availabilityRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const aiRoutes = require("./routes/aiRoutes");
-
-
+const prescriptionRoutes = require("./routes/prescriptionRoutes");
+const medicalExamRoutes = require("./routes/medicalExamRoutes");
+const fs = require("fs");
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+  fs.mkdirSync("uploads/exam-results");
+}
 // Montage des routes avec logging
 console.log("Mounting routes...");
 app.use("/api/auth", authRoutes);
@@ -51,8 +56,11 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/contact", require("./routes/contact"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
+
 console.log("Routes mounted successfully");
 
+app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/medicalexams", medicalExamRoutes);
 // Route de debug pour voir toutes les routes montées
 app.get("/api/debug-routes", (req, res) => {
   const routes = [];

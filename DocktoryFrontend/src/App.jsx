@@ -31,7 +31,8 @@ import VideoRoom from "./pages/VideoRoom";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import Payments from "./pages/Payments";
-
+import CreatePrescription from "./pages/prescription/CreatePrescription";
+import CreateMedicalExam from "./pages/exams/CreateMedicalExam";
 /* Layout avec Navbar + Footer (sans Chatbot ici) */
 const MainLayout = ({ children }) => (
   <>
@@ -205,6 +206,21 @@ function App() {
           <Route path="/payment/success" element={<MainLayout><PaymentSuccess /></MainLayout>} />
           <Route path="/payment/cancel" element={<MainLayout><PaymentCancel /></MainLayout>} />
           <Route path="/payments" element={ <MainLayout><Payments /></MainLayout>} />
+
+
+
+          <Route
+                  path="/appointment/:appointmentId/prescription"
+                  element={
+                  <MainLayout><CreatePrescription /></MainLayout>}
+                />
+                <Route
+                  path="/appointment/:appointmentId/exams"
+                  element={<MainLayout><CreateMedicalExam /></MainLayout>}
+                />
+
+          
+
 
         {/* Page 404 */}
         <Route
